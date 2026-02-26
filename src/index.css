@@ -1,0 +1,20 @@
+:root {
+  --card-radius: 18px;
+  --card-bg: rgba(10, 10, 20, 0.9);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --accent: #5b8cff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #15192b, #05060c);
+  color: #f7f7ff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
