@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import AdminDashboard from './Admin.jsx';
 import './App.css';
 
 const domains = [
@@ -35,7 +37,7 @@ const domains = [
   }
 ];
 
-function App() {
+const MainHub = () => {
   const [open, setOpen] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0.5);
@@ -63,13 +65,11 @@ function App() {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
-      // Auto-play attempt
       const attemptPlay = () => {
         audioRef.current.play().catch(error => {
           console.log("Autoplay blocked. Waiting for user interaction.");
         });
       };
-
       attemptPlay();
       window.addEventListener('click', attemptPlay, { once: true });
       return () => window.removeEventListener('click', attemptPlay);
@@ -80,7 +80,13 @@ function App() {
     <div className="domains-container">
       <audio ref={audioRef} src="/bg-music.mp3" loop />
 
-      {/* Audio UI */}
+      {/* Admin Link (Discrete) */}
+      <Link to="/admin" className="admin-discrete-link">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.54-3.08 8.65-7 9.88-3.92-1.23-7-5.34-7-9.88V6.3l7-3.12z" />
+        </svg>
+      </Link>
+
       <div className="audio-player-glass">
         <button className={`control-btn ${isMuted ? 'muted' : ''}`} onClick={toggleMute}>
           {isMuted ? (
@@ -141,13 +147,23 @@ function App() {
         ))}
       </div>
 
-      {/* Background Decor */}
       <div className="ambient-background">
         <div className="blob blob-1"></div>
         <div className="blob blob-2"></div>
         <div className="blob blob-3"></div>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<MainHub />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+      </Routes>
+    </Router>
   );
 }
 
