@@ -20,6 +20,9 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [summary, setSummary] = useState({ total: 0, unique: 0, live: 0, campaigns: 0 });
     const [isOffline, setIsOffline] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
     const API_BASE = 'https://pixel-tracker-production-2f84.up.railway.app';
 
@@ -144,6 +147,55 @@ const AdminDashboard = () => {
         hidden: { y: 20, opacity: 0 },
         visible: { y: 0, opacity: 1 }
     };
+
+    const handleLogin = (e) => {
+        e.preventDefault();
+        if (password === 'Poncholove20!!') {
+            setIsAuthenticated(true);
+            setError('');
+        } else {
+            setError('ACCESS DENIED: INVALID CREDENTIALS');
+            setPassword('');
+        }
+    };
+
+    if (!isAuthenticated) {
+        return (
+            <div className="admin-auth-container">
+                <div className="admin-bg-blobs">
+                    <div className="blob blob-1"></div>
+                    <div className="blob blob-2"></div>
+                </div>
+                <motion.div
+                    className="auth-card"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                >
+                    <div className="auth-header">
+                        <div className="logo-icon"><Shield size={24} /></div>
+                        <h2>SECURE ACCESS</h2>
+                        <p>SYMMETRIC ENCRYPTION ACTIVE</p>
+                    </div>
+                    <form onSubmit={handleLogin}>
+                        <div className="input-group">
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="ENTER SYSTEM KEY"
+                                autoFocus
+                            />
+                            <div className="input-line"></div>
+                        </div>
+                        {error && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="auth-error">{error}</motion.p>}
+                        <button type="submit" className="auth-submit">
+                            INITIALIZE LINK
+                        </button>
+                    </form>
+                </motion.div>
+            </div>
+        );
+    }
 
     return (
         <div className="admin-container">
