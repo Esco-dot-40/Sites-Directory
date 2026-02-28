@@ -6,7 +6,7 @@ import {
 import {
     Users, Eye, MousePointer2, Clock, Globe, Shield,
     Activity, ArrowUpRight, ArrowDownRight, Search,
-    Cpu, Zap, Radio, Terminal
+    Cpu, Zap, Radio, Terminal, Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getHubAnalytics, getFlagEmoji } from './analytics';
@@ -288,44 +288,70 @@ const AdminDashboard = () => {
                     {activeTab === 'logs' && (
                         <motion.div key="logs" className="analytics-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <div className="heatmap-section">
-                                <h3 className="section-title">Global Traffic Heatmap (Grid)</h3>
+                                <h3 className="card-title">Global Activity Mesh</h3>
                                 <div className="heatmap-grid">
-                                    {hubLogs.slice(0, 48).map(log => (
-                                        <div key={log.id} className="heat-pixel" title={`${log.city}, ${log.country}`}>
-                                            <div className="pixel-inner" style={{ opacity: Math.random() * 0.8 + 0.2 }}></div>
-                                        </div>
-                                    ))}
+                                    {/* Create a full grid of 96 pixels for a richer look */}
+                                    {Array.from({ length: 96 }).map((_, idx) => {
+                                        const isActive = hubLogs.length > 0 && idx < hubLogs.length * 2;
+                                        return (
+                                            <div key={idx} className={`heat-pixel ${isActive ? 'active' : ''}`}>
+                                                <div className="pixel-inner"></div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                             <div className="analytics-list">
-                                {hubLogs.map(log => (
-                                    <div key={log.id} className="log-card">
-                                        <div className="log-main">
-                                            <div className="log-icon-wrap">{getFlagEmoji(log.countryCode)}</div>
-                                            <div className="log-content">
-                                                <h3>{log.site}</h3>
-                                                <p>{log.city}, {log.country}</p>
-                                                <small>{new Date(log.timestamp).toLocaleString()}</small>
+                                {hubLogs.length === 0 ? (
+                                    <div className="no-logs">LISTENING FOR INCOMING SIGNALS...</div>
+                                ) : (
+                                    hubLogs.map(log => (
+                                        <div key={log.id} className="log-card">
+                                            <div className="log-main">
+                                                <div className="log-icon-wrap">{getFlagEmoji(log.countryCode)}</div>
+                                                <div className="log-content">
+                                                    <h3>{log.site || 'Internal Node'}</h3>
+                                                    <p>{log.city && log.country ? `${log.city}, ${log.country}` : 'Geo-Location: Encrypted'}</p>
+                                                    <small>{new Date(log.timestamp).toLocaleString()}</small>
+                                                </div>
+                                            </div>
+                                            <div className="log-details">
+                                                <div className="detail-item">
+                                                    <span className="label">Endpoint IP</span>
+                                                    <span className="value">{log.query || '0.0.0.0'}</span>
+                                                </div>
+                                                <div className="detail-item">
+                                                    <span className="label">Network ISP</span>
+                                                    <span className="value">{log.isp || 'ANALYZING...'}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="log-details">
-                                            <div className="detail-item"><span className="label">IP</span><span className="value">{log.query}</span></div>
-                                            <div className="detail-item"><span className="label">ISP</span><span className="value">{log.isp}</span></div>
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))
+                                )}
                             </div>
                         </motion.div>
                     )}
 
                     {activeTab === 'security' && (
                         <motion.div key="sec" className="security-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                            <div className="stats-grid">
+                                <div className="stat-card">
+                                    <div className="stat-icon"><Shield size={20} /></div>
+                                    <span className="stat-label">Firewall Status</span>
+                                    <div className="stat-value" style={{ color: '#5bff8c' }}>ACTIVE</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-icon"><Lock size={20} /></div>
+                                    <span className="stat-label">Encryption</span>
+                                    <div className="stat-value">AES-256</div>
+                                </div>
+                            </div>
                             <div className="card">
-                                <h2 className="card-title">Security Protocols</h2>
+                                <h2 className="card-title">Live Threat Intelligence</h2>
                                 <div className="security-list">
-                                    <div className="sec-item"><Shield size={20} className="active" /> <span>Firewall: ACTIVE</span></div>
-                                    <div className="sec-item"><Zap size={20} /> <span>DDoS Protection: NORMAL</span></div>
-                                    <div className="sec-item"><Activity size={20} /> <span>Packet Inspection: PASSING</span></div>
+                                    <div className="sec-item"><Shield size={20} className="active" /> <span>Intrusion Prevention System (IPS): MONITORING</span></div>
+                                    <div className="sec-item"><Zap size={20} style={{ color: '#ffa500' }} /> <span>Heuristic Analysis: SCANNING PACKETS</span></div>
+                                    <div className="sec-item"><Activity size={20} className="active" /> <span>Global Sync: OPERATIONAL</span></div>
                                 </div>
                             </div>
                         </motion.div>
@@ -334,10 +360,18 @@ const AdminDashboard = () => {
                     {activeTab === 'nodes' && (
                         <motion.div key="nodes" className="nodes-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <div className="node-map-sim">
-                                <div className="node-point active" style={{ top: '20%', left: '30%' }}></div>
-                                <div className="node-point active" style={{ top: '50%', left: '80%' }}></div>
-                                <div className="node-point active" style={{ top: '70%', left: '40%' }}></div>
-                                <p>GLOBAL NODE ARCHITECTURE VISUALIZATION ACTIVE</p>
+                                {/* Randomly placed dots for "nodes" effect */}
+                                {Array.from({ length: 15 }).map((_, i) => (
+                                    <div key={i} className={`node-point ${i < 3 ? 'active' : ''}`} style={{
+                                        top: `${20 + Math.random() * 60}%`,
+                                        left: `${10 + Math.random() * 80}%`,
+                                        opacity: 0.3 + Math.random() * 0.7
+                                    }}></div>
+                                ))}
+                                <div className="node-overlay-text">
+                                    <h2 style={{ fontSize: '1.5rem', fontWeight: '900', letterSpacing: '0.3em', margin: 0 }}>CORE-V4 ARCHITECTURE</h2>
+                                    <p style={{ color: 'var(--text-dim)', fontSize: '0.8rem' }}>MAPPING ACTIVE SIGNALS ACROSS GLOBAL ENDPOINTS</p>
+                                </div>
                             </div>
                         </motion.div>
                     )}
@@ -345,10 +379,15 @@ const AdminDashboard = () => {
                     {activeTab === 'live' && (
                         <motion.div key="live" className="live-ops-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <div className="terminal-log">
-                                <div>[SYS] ESC_SYS ONLINE...</div>
-                                <div>[NET] TRACKING {hubLogs.length} SIGNALS...</div>
-                                {hubLogs.slice(0, 5).map(l => (
-                                    <div key={l.id}>[GEO] INCOMING SIG FROM {l.city?.toUpperCase()}</div>
+                                <div style={{ color: 'white', marginBottom: '1rem', opacity: 0.5 }}>// SYSTEM INITIALIZED / {new Date().toLocaleDateString()}</div>
+                                <div style={{ fontWeight: 800 }}>[SYS] KERNEL_ESTABLISHED ... OK</div>
+                                <div style={{ fontWeight: 800 }}>[NET] SEARCHING FOR PEERS ... DONE ({hubLogs.length} DETECTED)</div>
+                                {hubLogs.slice(0, 8).map(l => (
+                                    <div key={l.id} style={{ display: 'flex', gap: '1rem' }}>
+                                        <span style={{ color: 'var(--text-dim)' }}>[{new Date(l.timestamp).toLocaleTimeString()}]</span>
+                                        <span style={{ color: '#5b8cff' }}>HUB_SIG_INCOMING</span>
+                                        <span>FROM {l.city?.toUpperCase() || 'ENCRYPTED_NODE'} / {l.countryCode || '??'}</span>
+                                    </div>
                                 ))}
                                 <div className="cursor-line">_</div>
                             </div>
