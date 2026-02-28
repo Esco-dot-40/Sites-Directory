@@ -15,17 +15,24 @@ const API_ANALYTICS_LOCAL = 'http://localhost:5000/api/analytics';
 
 export const trackVisit = async (siteLabel = 'Main Hub') => {
     let geoData = {};
+    const metadata = {
+        userAgent: navigator.userAgent,
+        screenRes: `${window.screen.width}x${window.screen.height}`,
+        referrer: document.referrer || 'Direct Entry',
+        language: navigator.language
+    };
+
     try {
         const responseGeo = await fetch(API_ENDPOINT);
         geoData = await responseGeo.json();
 
         if (geoData.status !== 'success') return;
 
-        // Post to your own Postgres Backend
+        // Post to your own Postgres Backend with deep metadata
         const trackRes = await fetch(API_TRACK_LOCAL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ siteLabel, ...geoData })
+            body: JSON.stringify({ siteLabel, ...geoData, ...metadata })
         });
 
         return await trackRes.json();
@@ -40,7 +47,8 @@ export const trackVisit = async (siteLabel = 'Main Hub') => {
             site_label: siteLabel,
             timestamp: new Date().toISOString(),
             query: geoData.query || 'Unknown',
-            ...geoData
+            ...geoData,
+            ...metadata
         };
         existingLogs.unshift(fallbackEntry);
         localStorage.setItem('hub_visitor_logs', JSON.stringify(existingLogs.slice(0, 50)));

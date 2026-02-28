@@ -9,8 +9,14 @@ import {
     Cpu, Zap, Radio, Terminal, Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 import { getHubAnalytics, getFlagEmoji } from './analytics';
 import './Admin.css';
+
+const API_BASE = window.location.hostname === 'localhost'
+    ? 'http://localhost:5000'
+    : ''; // Use relative paths for proxy/production
 
 const COLORS = ['#5b8cff', '#ff5b8c', '#5bff8c', '#8c5bff', '#ffa500'];
 
@@ -287,42 +293,88 @@ const AdminDashboard = () => {
 
                     {activeTab === 'logs' && (
                         <motion.div key="logs" className="analytics-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                            <div className="heatmap-section">
-                                <h3 className="card-title">Global Activity Mesh</h3>
-                                <div className="heatmap-grid">
-                                    {/* Create a full grid of 96 pixels for a richer look */}
-                                    {Array.from({ length: 96 }).map((_, idx) => {
-                                        const isActive = hubLogs.length > 0 && idx < hubLogs.length * 2;
-                                        return (
-                                            <div key={idx} className={`heat-pixel ${isActive ? 'active' : ''}`}>
-                                                <div className="pixel-inner"></div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                            <div className="heatmap-section" style={{ height: '400px', padding: 0, overflow: 'hidden' }}>
+                                <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={true}>
+                                    <TileLayer
+                                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                                    />
+                                    {hubLogs.map(log => (
+                                        log.lat && log.lon && (
+                                            <CircleMarker
+                                                key={log.id}
+                                                center={[log.lat, log.lon]}
+                                                radius={8}
+                                                fillColor="#5b8cff"
+                                                color="#fff"
+                                                weight={1}
+                                                fillOpacity={0.6}
+                                            >
+                                                <Popup className="dark-popup">
+                                                    <div style={{ color: '#fff', background: '#0a0c10', padding: '0.5rem' }}>
+                                                        <strong>{log.city}, {log.country}</strong><br />
+                                                        IP: {log.query}<br />
+                                                        Time: {new Date(log.timestamp).toLocaleTimeString()}
+                                                    </div>
+                                                </Popup>
+                                            </CircleMarker>
+                                        )
+                                    ))}
+                                </MapContainer>
                             </div>
+
                             <div className="analytics-list">
                                 {hubLogs.length === 0 ? (
-                                    <div className="no-logs">LISTENING FOR INCOMING SIGNALS...</div>
+                                    <div className="no-logs">ESTABLISHING GLOBAL SYNC...</div>
                                 ) : (
                                     hubLogs.map(log => (
-                                        <div key={log.id} className="log-card">
-                                            <div className="log-main">
-                                                <div className="log-icon-wrap">{getFlagEmoji(log.countryCode)}</div>
-                                                <div className="log-content">
-                                                    <h3>{log.site || 'Internal Node'}</h3>
-                                                    <p>{log.city && log.country ? `${log.city}, ${log.country}` : 'Geo-Location: Encrypted'}</p>
-                                                    <small>{new Date(log.timestamp).toLocaleString()}</small>
+                                        <div key={log.id} className="log-card" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '2rem' }}>
+                                            <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div className="log-main">
+                                                    <div className="log-icon-wrap">{getFlagEmoji(log.countryCode)}</div>
+                                                    <div className="log-content">
+                                                        <h3>{log.site || 'Main Hub'} / {log.city || 'Edge Node'}</h3>
+                                                        <p>{log.country}, {log.region}</p>
+                                                        <small>{new Date(log.timestamp).toLocaleString()}</small>
+                                                    </div>
+                                                </div>
+                                                <div className="log-details">
+                                                    <div className="detail-item">
+                                                        <span className="label">Public IP</span>
+                                                        <span className="value" style={{ color: '#5b8cff' }}>{log.query}</span>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <span className="label">ISP / Org</span>
+                                                        <span className="value">{log.isp}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="log-details">
+
+                                            <div className="in-depth-meta" style={{
+                                                display: 'grid',
+                                                gridTemplateColumns: 'repeat(4, 1fr)',
+                                                width: '100%',
+                                                padding: '1.5rem',
+                                                background: 'rgba(0,0,0,0.2)',
+                                                borderRadius: '16px',
+                                                border: '1px solid rgba(255,255,255,0.05)',
+                                                gap: '1rem'
+                                            }}>
                                                 <div className="detail-item">
-                                                    <span className="label">Endpoint IP</span>
-                                                    <span className="value">{log.query || '0.0.0.0'}</span>
+                                                    <span className="label">OS / Device</span>
+                                                    <span className="value" style={{ fontSize: '0.7rem', opacity: 0.8 }}>{log.user_agent?.split(')')[0]?.split('(')[1]?.slice(0, 30) || 'Unknown'}</span>
                                                 </div>
                                                 <div className="detail-item">
-                                                    <span className="label">Network ISP</span>
-                                                    <span className="value">{log.isp || 'ANALYZING...'}</span>
+                                                    <span className="label">Resolution</span>
+                                                    <span className="value">{log.screen_res || '??'}</span>
+                                                </div>
+                                                <div className="detail-item">
+                                                    <span className="label">Referrer</span>
+                                                    <span className="value" style={{ fontSize: '0.75rem', color: '#ff5b8c' }}>{log.referrer?.slice(0, 20) || 'Direct'}</span>
+                                                </div>
+                                                <div className="detail-item">
+                                                    <span className="label">Language</span>
+                                                    <span className="value uppercase">{log.language || 'EN'}</span>
                                                 </div>
                                             </div>
                                         </div>
