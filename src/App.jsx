@@ -1,38 +1,40 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import AdminDashboard from './Admin.jsx';
+import TextType from './TextType';
 import './App.css';
 
 const domains = [
   {
     name: "velarixsolutions.nl",
     sites: [
-      { label: "Crypto", url: "https://crypto.velarixsolutions.nl", description: "Cryptocurrency tracking and analysis dashboard." },
-      { label: "Farkle", url: "https://farkle.velarixsolutions.nl", description: "Multiplayer dice game with real-time stats." },
+      { label: "Crypto", url: "https://crypto.velarixsolutions.nl", description: "WIP Crypto Exchange" },
+      { label: "Farkle", url: "https://farkle.velarixsolutions.nl", description: "Multiplayer dice game with real-time stats. (Web version of discord app)" },
       { label: "Find", url: "https://find.velarixsolutions.nl", description: "Search and discovery toolkit." },
-      { label: "Spell", url: "https://spell.velarixsolutions.nl", description: "Daily word game and spelling challenges." },
-      { label: "SquareUp", url: "https://squareup.velarixsolutions.nl", description: "Business management and payment portal." },
-      { label: "Weak", url: "https://weak.velarixsolutions.nl", description: "Security analysis and vulnerability testing." }
+      { label: "Spell", url: "https://spell.velarixsolutions.nl", description: "Daily word game and spelling challenges. (Web version of discord app)" },
+      { label: "SquareUp", url: "https://squareup.velarixsolutions.nl", description: "Clone Of Dots N Boxes Off Plato. (Web version of discord app" },
+      { label: "Weak", url: "https://weak.velarixsolutions.nl", description: "Grown Men Being Weird Showcase" }
     ]
   },
   {
     name: "veroe.fun",
     sites: [
-      { label: "Dirty", url: "https://dirty.veroe.fun", description: "Experimental 3D playground." },
-      { label: "Esco", url: "https://esco.veroe.fun", description: "Project Esco management console." },
-      { label: "Me", url: "https://me.veroe.fun", description: "Personal portal and social links." },
-      { label: "Fight", url: "https://fight.veroe.fun", description: "Online arena-style browser game." },
-      { label: "More", url: "https://more.veroe.fun", description: "A collection of secondary projects." },
-      { label: "MySign", url: "https://mysign.veroe.fun", description: "Digital identity and signature platform." },
-      { label: "Pop", url: "https://pop.veroe.fun", description: "Casual arcade gaming experience." },
+      { label: "Dirty", url: "https://dirty.veroe.fun", description: "My Personal Private 1-on-1 Joyhub, Lovense, Satisfyer Control Hub." },
+      { label: "Esco", url: "https://esco.veroe.fun", description: "Portfolio Backup Domain" },
+      { label: "Me", url: "https://me.veroe.fun", description: "My Portfolio Link" },
+      { label: "Fight", url: "https://fight.veroe.fun", description: "Discord Link To Join/Apply For PopOut 21+" },
+      { label: "More", url: "https://more.veroe.fun", description: "Archive, semi active." },
+      { label: "MySign", url: "https://mysign.veroe.fun", description: "All Of That Astro Shit Everyone Talks About" },
+      { label: "Pop", url: "https://pop.veroe.fun", description: "WIP Beta LDR Intimacy Game, Balloon Popping Themed" },
       { label: "Spoti", url: "https://spoti.veroe.fun", description: "Spotify data and music visualization." },
-      { label: "TNT", url: "https://tnt.veroe.fun", description: "Dynamic particle and physics tests." }
+      { label: "TNT", url: "https://tnt.veroe.fun", description: "Lovense Control Type-n-Talk LDR App" }
     ]
   },
   {
     name: "veroe.space",
     sites: [
-      { label: "Main Site", url: "https://veroe.space", description: "The central hub for the Veroe Space ecosystem." }
+      { label: "Main Site", url: "https://veroe.space", description: "Esco's Pastebin" }
     ]
   }
 ];
@@ -41,6 +43,9 @@ const MainHub = () => {
   const [open, setOpen] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0.5);
+  const [isIntroComplete, setIsIntroComplete] = useState(false);
+  const [pageTitle, setPageTitle] = useState("Veroe.fun");
+  const [isLoading, setIsLoading] = useState(true);
   const audioRef = useRef(null);
 
   const toggle = (domainName) => {
@@ -63,6 +68,17 @@ const MainHub = () => {
   };
 
   useEffect(() => {
+    // Initial page title logic
+    document.title = "Tweaking System, One Sec";
+    const titleTimer = setTimeout(() => {
+      document.title = "Rule, Find, Bind / veroe.fun";
+      setIsLoading(false);
+    }, 3000);
+
+    // Analytics Tracking Hit
+    fetch('https://pixel-tracker-production-2f84.up.railway.app/t/domain-hub.png?setup=false', { mode: 'no-cors' })
+      .catch(e => console.log('Analytics offline'));
+
     if (audioRef.current) {
       audioRef.current.volume = volume;
       const attemptPlay = () => {
@@ -72,8 +88,12 @@ const MainHub = () => {
       };
       attemptPlay();
       window.addEventListener('click', attemptPlay, { once: true });
-      return () => window.removeEventListener('click', attemptPlay);
+      return () => {
+        window.removeEventListener('click', attemptPlay);
+        clearTimeout(titleTimer);
+      };
     }
+    return () => clearTimeout(titleTimer);
   }, []);
 
   return (
@@ -82,12 +102,22 @@ const MainHub = () => {
 
       {/* Admin Link (Discrete) */}
       <Link to="/admin" className="admin-discrete-link">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.54-3.08 8.65-7 9.88-3.92-1.23-7-5.34-7-9.88V6.3l7-3.12z" />
-        </svg>
+        <motion.div
+          whileHover={{ scale: 1.1, rotate: 90 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.54-3.08 8.65-7 9.88-3.92-1.23-7-5.34-7-9.88V6.3l7-3.12z" />
+          </svg>
+        </motion.div>
       </Link>
 
-      <div className="audio-player-glass">
+      <motion.div
+        className="audio-player-glass"
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
         <button className={`control-btn ${isMuted ? 'muted' : ''}`} onClick={toggleMute}>
           {isMuted ? (
             <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" /></svg>
@@ -97,55 +127,124 @@ const MainHub = () => {
         </button>
         <div className="volume-track">
           <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            onChange={handleVolumeChange}
-            className="volume-slider"
+            type="range" min="0" max="1" step="0.01" value={volume}
+            onChange={handleVolumeChange} className="volume-slider"
           />
         </div>
-      </div>
+      </motion.div>
 
       <header className="hero-section">
-        <h1 className="domains-title">Escos Outlet</h1>
-        <p className="hero-subtitle">Interactive Showcase</p>
+        <motion.h1
+          className="domains-title"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        >
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={isIntroComplete ? "main" : "intro"}
+              initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -10, filter: 'blur(10px)' }}
+              transition={{ duration: 0.8, ease: "circOut" }}
+            >
+              {isIntroComplete ? pageTitle : "Escos Outlet"}
+            </motion.span>
+          </AnimatePresence>
+        </motion.h1>
+
+        <AnimatePresence mode="wait">
+          {!isIntroComplete && (
+            <motion.div
+              key="intro-typing"
+              className="hero-subtitle-container"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, filter: 'blur(10px)', scale: 0.95 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+            >
+              <TextType
+                text={["Welcome To Esco's Domain Directory...", "veroe.space", "veroe.fun", "velarixsolutions.nl"]}
+                className="hero-subtitle"
+                typingSpeed={60}
+                deletingSpeed={40}
+                pauseDuration={1200}
+                loop={false}
+                showCursor={true}
+                cursorCharacter="|"
+                onFinished={() => {
+                  setTimeout(() => setIsIntroComplete(true), 1000);
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      <div className="domains">
+      <motion.div
+        className="domains"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: { opacity: 0 },
+          visible: { opacity: 1, transition: { staggerChildren: 0.2 } }
+        }}
+      >
         {domains.map(domain => (
-          <div key={domain.name} className="domain-column">
+          <motion.div
+            key={domain.name}
+            className="domain-column"
+            variants={{
+              hidden: { x: -20, opacity: 0 },
+              visible: { x: 0, opacity: 1 }
+            }}
+          >
             <button
               className="domain-header"
               onClick={() => toggle(domain.name)}
               aria-expanded={open === domain.name}
             >
               <span className="domain-name">{domain.name}</span>
-              <span className={`chevron ${open === domain.name ? "open" : ""}`}>▼</span>
+              <motion.span
+                className="chevron"
+                animate={{ rotate: open === domain.name ? 180 : 0 }}
+              >
+                ▼
+              </motion.span>
             </button>
 
-            <div className={`sites ${open === domain.name ? "open" : ""}`}>
-              {domain.sites.map((site, i) => (
-                <a
-                  key={site.url}
-                  href={site.url}
-                  className="site-card"
-                  style={{ "--i": i }}
-                  target="_blank"
-                  rel="noopener noreferrer"
+            <AnimatePresence>
+              {open === domain.name && (
+                <motion.div
+                  className="sites open"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                  style={{ overflow: 'hidden' }}
                 >
-                  <div className="site-inner">
-                    <div className="card-glare"></div>
-                    <h3>{site.label}</h3>
-                    <p>{site.description}</p>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
+                  {domain.sites.map((site, i) => (
+                    <a
+                      key={site.url} href={site.url} className="site-card"
+                      target="_blank" rel="noopener noreferrer"
+                    >
+                      <motion.div
+                        className="site-inner"
+                        whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.08)' }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <div className="card-glare"></div>
+                        <h3>{site.label}</h3>
+                        <p>{site.description}</p>
+                      </motion.div>
+                    </a>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       <div className="ambient-background">
         <div className="blob blob-1"></div>
@@ -168,3 +267,4 @@ function App() {
 }
 
 export default App;
+
