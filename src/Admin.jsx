@@ -9,6 +9,7 @@ import {
     Cpu, Zap, Radio, Terminal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getHubAnalytics, getFlagEmoji } from './analytics';
 import './Admin.css';
 
 const COLORS = ['#5b8cff', '#ff5b8c', '#5bff8c', '#8c5bff', '#ffa500'];
@@ -23,6 +24,10 @@ const AdminDashboard = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+
+    // Detailed Analytics States
+    const [showAnalytics, setShowAnalytics] = useState(false);
+    const [hubLogs, setHubLogs] = useState([]);
 
     const API_BASE = 'https://pixel-tracker-production-2f84.up.railway.app';
 
@@ -105,7 +110,11 @@ const AdminDashboard = () => {
     useEffect(() => {
         document.title = "Tweaking System, One Sec";
         fetchData();
-        const interval = setInterval(fetchData, 15000);
+        setHubLogs(getHubAnalytics());
+        const interval = setInterval(() => {
+            fetchData();
+            setHubLogs(getHubAnalytics());
+        }, 15000);
         return () => {
             clearInterval(interval);
             document.title = "Rule, Find, Bind / veroe.fun";
@@ -212,8 +221,12 @@ const AdminDashboard = () => {
                     ESCO_SYS
                 </div>
                 <nav className="sidebar-nav">
-                    <div className="nav-item active"><Activity size={18} /> Dashboard</div>
-                    <div className="nav-item"><Globe size={18} /> Geo Metrics</div>
+                    <div className={`nav-item ${!showAnalytics ? 'active' : ''}`} onClick={() => setShowAnalytics(false)}>
+                        <Activity size={18} /> Dashboard
+                    </div>
+                    <div className={`nav-item ${showAnalytics ? 'active' : ''}`} onClick={() => setShowAnalytics(true)}>
+                        <Globe size={18} /> Detailed Logs
+                    </div>
                     <div className="nav-item"><Shield size={18} /> Security</div>
                     <div className="nav-item"><Terminal size={18} /> Nodes</div>
                     <div className="nav-item"><Radio size={18} /> Live Ops</div>
@@ -224,10 +237,11 @@ const AdminDashboard = () => {
             <main className="admin-main">
                 <header className="admin-header">
                     <motion.h1
+                        key={showAnalytics ? 'analytics' : 'overview'}
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                     >
-                        Network Overview
+                        {showAnalytics ? 'Detailed Traffic Logs' : 'Network Overview'}
                     </motion.h1>
                     <div className="header-status">
                         <div className={isOffline ? "" : "status-dot-active"}></div>
@@ -235,153 +249,210 @@ const AdminDashboard = () => {
                     </div>
                 </header>
 
-                {/* Stats Grid */}
-                <motion.section
-                    className="stats-grid"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                >
-                    <motion.div className="stat-card" variants={itemVariants}>
-                        <div className="stat-icon"><Users size={20} /></div>
-                        <span className="stat-label">Total Volume</span>
-                        <div className="stat-value">
-                            {summary.total > 1000 ? `${(summary.total / 1000).toFixed(1)}k` : summary.total}
-                        </div>
-                    </motion.div>
-                    <motion.div className="stat-card" variants={itemVariants}>
-                        <div className="stat-icon"><Eye size={20} /></div>
-                        <span className="stat-label">Unique Hits</span>
-                        <div className="stat-value">
-                            {summary.unique > 1000 ? `${(summary.unique / 1000).toFixed(1)}k` : summary.unique}
-                        </div>
-                    </motion.div>
-                    <motion.div className="stat-card" variants={itemVariants}>
-                        <div className="stat-icon"><Cpu size={20} /></div>
-                        <span className="stat-label">Campaign Nodes</span>
-                        <div className="stat-value">{summary.campaigns}</div>
-                    </motion.div>
-                    <motion.div className="stat-card" variants={itemVariants}>
-                        <div className="stat-icon"><Activity size={20} /></div>
-                        <span className="stat-label">Active Signal</span>
-                        <div className="stat-value" style={{ color: '#5bff8c' }}>{summary.live}</div>
-                    </motion.div>
-                </motion.section>
-
-                {/* Charts Grid */}
-                <div className="admin-grid">
+                {showAnalytics ? (
                     <motion.div
-                        className="card"
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.4 }}
+                        className="analytics-view"
+                        initial="hidden"
+                        animate="visible"
+                        variants={containerVariants}
                     >
-                        <div className="card-header">
-                            <h2 className="card-title">Network Activity Flow</h2>
+                        <div className="analytics-table-header">
+                            <div className="header-pill">Total Tracked: {hubLogs.length}</div>
+                            <div className="header-pill">Provider: ip-api.com</div>
                         </div>
-                        <div style={{ width: '100%', height: 350 }}>
-                            <ResponsiveContainer>
-                                <AreaChart data={trafficStats}>
-                                    <defs>
-                                        <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#5b8cff" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#5b8cff" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
-                                    <Tooltip
-                                        contentStyle={{ background: '#0a0c14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', backdropFilter: 'blur(10px)' }}
-                                    />
-                                    <Area type="monotone" dataKey="visits" stroke="#5b8cff" strokeWidth={4} fillOpacity={1} fill="url(#colorVisits)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
+
+                        <div className="analytics-list">
+                            <AnimatePresence>
+                                {hubLogs.length > 0 ? (
+                                    hubLogs.map((log, idx) => (
+                                        <motion.div
+                                            key={log.id}
+                                            className="log-card"
+                                            variants={itemVariants}
+                                        >
+                                            <div className="log-main">
+                                                <div className="log-icon-wrap">
+                                                    {getFlagEmoji(log.countryCode)}
+                                                </div>
+                                                <div className="log-content">
+                                                    <h3>{log.site}</h3>
+                                                    <p>{log.city}, {log.regionName}, {log.country}</p>
+                                                    <small>{new Date(log.timestamp).toLocaleString()}</small>
+                                                </div>
+                                            </div>
+                                            <div className="log-details">
+                                                <div className="detail-item">
+                                                    <span className="label">IP</span>
+                                                    <span className="value">{log.query}</span>
+                                                </div>
+                                                <div className="detail-item">
+                                                    <span className="label">ISP</span>
+                                                    <span className="value">{log.isp}</span>
+                                                </div>
+                                                <div className="detail-item">
+                                                    <span className="label">Loc</span>
+                                                    <span className="value">{log.lat.toFixed(2)}, {log.lon.toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ))
+                                ) : (
+                                    <div className="no-logs">NO SIGNAL DATA COLLECTED YET</div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     </motion.div>
+                ) : (
+                    <>
+                        {/* Stats Grid */}
+                        <motion.section
+                            className="stats-grid"
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                        >
+                            <motion.div className="stat-card" variants={itemVariants}>
+                                <div className="stat-icon"><Users size={20} /></div>
+                                <span className="stat-label">Total Volume</span>
+                                <div className="stat-value">
+                                    {summary.total > 1000 ? `${(summary.total / 1000).toFixed(1)}k` : summary.total}
+                                </div>
+                            </motion.div>
+                            <motion.div className="stat-card" variants={itemVariants}>
+                                <div className="stat-icon"><Eye size={20} /></div>
+                                <span className="stat-label">Unique Hits</span>
+                                <div className="stat-value">
+                                    {summary.unique > 1000 ? `${(summary.unique / 1000).toFixed(1)}k` : summary.unique}
+                                </div>
+                            </motion.div>
+                            <motion.div className="stat-card" variants={itemVariants}>
+                                <div className="stat-icon"><Cpu size={20} /></div>
+                                <span className="stat-label">Campaign Nodes</span>
+                                <div className="stat-value">{summary.campaigns}</div>
+                            </motion.div>
+                            <motion.div className="stat-card" variants={itemVariants}>
+                                <div className="stat-icon"><Activity size={20} /></div>
+                                <span className="stat-label">Active Signal</span>
+                                <div className="stat-value" style={{ color: '#5bff8c' }}>{summary.live}</div>
+                            </motion.div>
+                        </motion.section>
 
-                    <motion.div
-                        className="card"
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.5 }}
-                    >
-                        <div className="card-header">
-                            <h2 className="card-title">Node Distribution</h2>
-                        </div>
-                        <div style={{ width: '100%', height: 350 }}>
-                            <ResponsiveContainer>
-                                <PieChart>
-                                    <Pie
-                                        data={distribution}
-                                        innerRadius={80}
-                                        outerRadius={110}
-                                        paddingAngle={8}
-                                        dataKey="value"
-                                        stroke="none"
-                                    >
-                                        {distribution.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        contentStyle={{ background: '#0a0c14', border: 'none', borderRadius: '12px' }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </motion.div>
+                        {/* Charts Grid */}
+                        <div className="admin-grid">
+                            <motion.div
+                                className="card"
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: 0.4 }}
+                            >
+                                <div className="card-header">
+                                    <h2 className="card-title">Network Activity Flow</h2>
+                                </div>
+                                <div style={{ width: '100%', height: 350 }}>
+                                    <ResponsiveContainer>
+                                        <AreaChart data={trafficStats}>
+                                            <defs>
+                                                <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#5b8cff" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#5b8cff" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                                            <XAxis dataKey="name" stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="rgba(255,255,255,0.2)" fontSize={12} tickLine={false} axisLine={false} />
+                                            <Tooltip
+                                                contentStyle={{ background: '#0a0c14', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', backdropFilter: 'blur(10px)' }}
+                                            />
+                                            <Area type="monotone" dataKey="visits" stroke="#5b8cff" strokeWidth={4} fillOpacity={1} fill="url(#colorVisits)" />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </motion.div>
 
-                    <motion.div
-                        className="card"
-                        style={{ gridColumn: 'span 2' }}
-                        initial={{ y: 30, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.6 }}
-                    >
-                        <div className="card-header">
-                            <h2 className="card-title">Live Signal Feed</h2>
-                        </div>
-                        <div className="admin-table-container">
-                            <table className="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Source Node</th>
-                                        <th>Relay Domain</th>
-                                        <th>Network ID</th>
-                                        <th>Geo Location</th>
-                                        <th>Signal Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <AnimatePresence>
-                                        {liveHits.map((user, idx) => (
-                                            <motion.tr
-                                                key={user.id}
-                                                initial={{ x: -10, opacity: 0 }}
-                                                animate={{ x: 0, opacity: 1 }}
-                                                transition={{ delay: 0.1 * idx }}
+                            <motion.div
+                                className="card"
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: 0.5 }}
+                            >
+                                <div className="card-header">
+                                    <h2 className="card-title">Node Distribution</h2>
+                                </div>
+                                <div style={{ width: '100%', height: 350 }}>
+                                    <ResponsiveContainer>
+                                        <PieChart>
+                                            <Pie
+                                                data={distribution}
+                                                innerRadius={80}
+                                                outerRadius={110}
+                                                paddingAngle={8}
+                                                dataKey="value"
+                                                stroke="none"
                                             >
-                                                <td className="user-cell">
-                                                    <div className="user-avatar">{user.name?.charAt(0) || '?'}</div>
-                                                    <span style={{ fontWeight: 600 }}>{user.name}</span>
-                                                </td>
-                                                <td style={{ opacity: 0.7 }}>{user.domain}</td>
-                                                <td style={{ fontFamily: 'monospace', opacity: 0.4 }}>{user.ip}</td>
-                                                <td>{user.location}</td>
-                                                <td>
-                                                    <span className={`badge ${user.status === 'Online' ? 'badge-online' : 'badge-recent'}`}>
-                                                        {user.status}
-                                                    </span>
-                                                </td>
-                                            </motion.tr>
-                                        ))}
-                                    </AnimatePresence>
-                                </tbody>
-                            </table>
+                                                {distribution.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip
+                                                contentStyle={{ background: '#0a0c14', border: 'none', borderRadius: '12px' }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                className="card"
+                                style={{ gridColumn: 'span 2' }}
+                                initial={{ y: 30, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ delay: 0.6 }}
+                            >
+                                <div className="card-header">
+                                    <h2 className="card-title">Live Signal Feed</h2>
+                                </div>
+                                <div className="admin-table-container">
+                                    <table className="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Source Node</th>
+                                                <th>Relay Domain</th>
+                                                <th>Network ID</th>
+                                                <th>Geo Location</th>
+                                                <th>Signal Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <AnimatePresence>
+                                                {liveHits.map((user, idx) => (
+                                                    <motion.tr
+                                                        key={user.id}
+                                                        initial={{ x: -10, opacity: 0 }}
+                                                        animate={{ x: 0, opacity: 1 }}
+                                                        transition={{ delay: 0.1 * idx }}
+                                                    >
+                                                        <td className="user-cell">
+                                                            <div className="user-avatar">{user.name?.charAt(0) || '?'}</div>
+                                                            <span style={{ fontWeight: 600 }}>{user.name}</span>
+                                                        </td>
+                                                        <td style={{ opacity: 0.7 }}>{user.domain}</td>
+                                                        <td style={{ fontFamily: 'monospace', opacity: 0.4 }}>{user.ip}</td>
+                                                        <td>{user.location}</td>
+                                                        <td>
+                                                            <span className={`badge ${user.status === 'Online' ? 'badge-online' : 'badge-recent'}`}>
+                                                                {user.status}
+                                                            </span>
+                                                        </td>
+                                                    </motion.tr>
+                                                ))}
+                                            </AnimatePresence>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </motion.div>
                         </div>
-                    </motion.div>
-                </div>
+                    </>
+                )}
             </main>
         </div>
     );

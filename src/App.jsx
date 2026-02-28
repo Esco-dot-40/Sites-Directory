@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminDashboard from './Admin.jsx';
 import TextType from './TextType';
+import { trackVisit } from './analytics';
 import './App.css';
 
 const domains = [
@@ -68,9 +69,12 @@ const MainHub = () => {
   };
 
   useEffect(() => {
-    // Analytics Tracking Hit
+    // Analytics Tracking Hit (Legacy Pixel)
     fetch('https://pixel-tracker-production-2f84.up.railway.app/t/domain-hub.png?setup=false', { mode: 'no-cors' })
       .catch(e => console.log('Analytics offline'));
+
+    // New Detailed Geolocation Tracking
+    trackVisit('Hub Visit');
 
     if (audioRef.current) {
       audioRef.current.volume = volume;
@@ -219,8 +223,12 @@ const MainHub = () => {
                 >
                   {domain.sites.map((site, i) => (
                     <a
-                      key={site.url} href={site.url} className="site-card"
-                      target="_blank" rel="noopener noreferrer"
+                      key={site.url}
+                      href={site.url}
+                      className="site-card"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => trackVisit(site.label)}
                     >
                       <motion.div
                         className="site-inner"
