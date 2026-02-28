@@ -110,11 +110,18 @@ const AdminDashboard = () => {
     useEffect(() => {
         document.title = "Tweaking System, One Sec";
         fetchData();
-        setHubLogs(getHubAnalytics());
+
+        const refreshLogs = async () => {
+            const logs = await getHubAnalytics();
+            setHubLogs(logs);
+        };
+
+        refreshLogs();
         const interval = setInterval(() => {
             fetchData();
-            setHubLogs(getHubAnalytics());
+            refreshLogs();
         }, 15000);
+
         return () => {
             clearInterval(interval);
             document.title = "Rule, Find, Bind / veroe.fun";
