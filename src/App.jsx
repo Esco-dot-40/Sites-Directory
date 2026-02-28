@@ -135,28 +135,17 @@ const MainHub = () => {
 
       <header className="hero-section">
         <h1 className="hero-title-wrapper">
-          <AnimatePresence mode="popLayout">
-            {!isIntroComplete ? (
-              <motion.span
-                key="title-intro"
-                className="domains-title"
-                initial={{ opacity: 1 }}
-                exit={{ opacity: 0, y: -20, filter: 'blur(15px)' }}
-                transition={{ duration: 0.6 }}
-              >
-                Escos Outlet
-              </motion.span>
-            ) : (
-              <motion.span
-                key="title-main"
-                className="domains-title"
-                initial={{ opacity: 0, y: 20, filter: 'blur(15px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                Veroe.fun
-              </motion.span>
-            )}
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={isIntroComplete ? "title-main" : "title-intro"}
+              className="domains-title"
+              initial={isIntroComplete ? { opacity: 0, y: 20, filter: 'blur(15px)' } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -20, filter: 'blur(15px)' }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            >
+              {isIntroComplete ? "Veroe.fun" : "Escos Outlet"}
+            </motion.span>
           </AnimatePresence>
         </h1>
 
