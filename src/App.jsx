@@ -68,13 +68,6 @@ const MainHub = () => {
   };
 
   useEffect(() => {
-    // Initial page title logic
-    document.title = "Tweaking System, One Sec";
-    const titleTimer = setTimeout(() => {
-      document.title = "Rule, Find, Bind / veroe.fun";
-      setIsLoading(false);
-    }, 3000);
-
     // Analytics Tracking Hit
     fetch('https://pixel-tracker-production-2f84.up.railway.app/t/domain-hub.png?setup=false', { mode: 'no-cors' })
       .catch(e => console.log('Analytics offline'));
@@ -90,11 +83,18 @@ const MainHub = () => {
       window.addEventListener('click', attemptPlay, { once: true });
       return () => {
         window.removeEventListener('click', attemptPlay);
-        clearTimeout(titleTimer);
       };
     }
-    return () => clearTimeout(titleTimer);
   }, []);
+
+  useEffect(() => {
+    if (!isIntroComplete) {
+      document.title = "Tweaking System, One Sec";
+    } else {
+      document.title = "Rule, Find, Bind / veroe.fun";
+      setIsLoading(false);
+    }
+  }, [isIntroComplete]);
 
   return (
     <div className="domains-container">
@@ -134,24 +134,29 @@ const MainHub = () => {
       </motion.div>
 
       <header className="hero-section">
-        <motion.h1
-          className="domains-title"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8 }}
-        >
+        <h1 className="domains-title">
           <AnimatePresence mode="wait">
-            <motion.span
-              key={isIntroComplete ? "main" : "intro"}
-              initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, y: -10, filter: 'blur(10px)' }}
-              transition={{ duration: 0.8, ease: "circOut" }}
-            >
-              {isIntroComplete ? pageTitle : "Escos Outlet"}
-            </motion.span>
+            {!isIntroComplete ? (
+              <motion.span
+                key="title-intro"
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0, y: -20, filter: 'blur(15px)' }}
+                transition={{ duration: 0.8, ease: "easeInOut" }}
+              >
+                Escos Outlet
+              </motion.span>
+            ) : (
+              <motion.span
+                key="title-main"
+                initial={{ opacity: 0, y: 20, filter: 'blur(15px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 1, ease: "easeOut" }}
+              >
+                Veroe.fun
+              </motion.span>
+            )}
           </AnimatePresence>
-        </motion.h1>
+        </h1>
 
         <AnimatePresence mode="wait">
           {!isIntroComplete && (
@@ -167,14 +172,12 @@ const MainHub = () => {
                 text={["Welcome To Esco's Domain Directory...", "veroe.space", "veroe.fun", "velarixsolutions.nl"]}
                 className="hero-subtitle"
                 typingSpeed={60}
-                deletingSpeed={40}
-                pauseDuration={1200}
+                deletingSpeed={30}
+                pauseDuration={1000}
                 loop={false}
                 showCursor={true}
                 cursorCharacter="|"
-                onFinished={() => {
-                  setTimeout(() => setIsIntroComplete(true), 1000);
-                }}
+                onFinished={() => setIsIntroComplete(true)}
               />
             </motion.div>
           )}
