@@ -40,50 +40,22 @@ const domains = [
   }
 ];
 
-const MainHub = () => {
+const tracks = ["/bg-music.mp3", "/link-up.mp3"];
+
+const MainHub = ({ audioControls }) => {
+  const { isMuted, volume, toggleMute, handleVolumeChange, currentTrackIndex } = audioControls;
   const [open, setOpen] = useState(null);
-  const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(0.5);
   const [isIntroComplete, setIsIntroComplete] = useState(false);
-  const [pageTitle, setPageTitle] = useState("Veroe.fun");
   const [isLoading, setIsLoading] = useState(true);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isVideoActive, setIsVideoActive] = useState(true);
-  const audioRef = useRef(null);
   const videoRef = useRef(null);
-  const tracks = ["/bg-music.mp3", "/link-up.mp3"];
 
   const toggle = (domainName) => {
     setOpen(open === domainName ? null : domainName);
   };
 
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
-    }
-  };
-
-  const handleTrackEnd = () => {
-    setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % tracks.length);
-  };
-
   const handleVideoEnd = () => {
     setIsVideoActive(false);
-  };
-
-  useEffect(() => {
-    if (audioRef.current && !isMuted) {
-      audioRef.current.play().catch(e => console.log("Playback failed on track change:", e));
-    }
-  }, [currentTrackIndex]);
-
-  const handleVolumeChange = (e) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-    }
   };
 
   useEffect(() => {
@@ -96,20 +68,6 @@ const MainHub = () => {
 
     // New Detailed Geolocation Tracking
     trackVisit('Hub Visit');
-
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-      const attemptPlay = () => {
-        audioRef.current.play().catch(error => {
-          console.log("Autoplay blocked. Waiting for user interaction.");
-        });
-      };
-      attemptPlay();
-      window.addEventListener('click', attemptPlay, { once: true });
-      return () => {
-        window.removeEventListener('click', attemptPlay);
-      };
-    }
   }, []);
 
   useEffect(() => {
@@ -120,12 +78,7 @@ const MainHub = () => {
 
   return (
     <div className="domains-container">
-      <audio
-        ref={audioRef}
-        src={tracks[currentTrackIndex]}
-        onEnded={handleTrackEnd}
-        autoPlay={!isMuted}
-      />
+
 
       {/* Admin Link (Discrete) */}
       <Link to="/admin" className="admin-discrete-link">
@@ -302,11 +255,69 @@ const MainHub = () => {
 }
 
 function App() {
+  const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(0.5);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(() => Math.floor(Math.random() * tracks.length));
+  const audioRef = useRef(null);
+
+  const toggleMute = () => {
+    const newState = !isMuted;
+    setIsMuted(newState);
+    if (audioRef.current) {
+      audioRef.current.muted = newState;
+    }
+  };
+
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
+    }
+  };
+
+  const handleTrackEnd = () => {
+    setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % tracks.length);
+  };
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.load();
+      if (!isMuted) {
+        audioRef.current.play().catch(e => console.log("Playback failed on track change:", e));
+      }
+    }
+  }, [currentTrackIndex]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+      const attemptPlay = () => {
+        audioRef.current.play().catch(error => {
+          console.log("Autoplay blocked. Waiting for user interaction.");
+        });
+      };
+      attemptPlay();
+      window.addEventListener('click', attemptPlay, { once: true });
+      return () => {
+        window.removeEventListener('click', attemptPlay);
+      };
+    }
+  }, []);
+
+  const audioControls = { isMuted, volume, toggleMute, handleVolumeChange, currentTrackIndex };
+
   return (
     <Router>
+      <audio
+        ref={audioRef}
+        src={tracks[currentTrackIndex]}
+        onEnded={handleTrackEnd}
+        autoPlay={!isMuted}
+      />
       <Routes>
-        <Route path="/" element={<MainHub />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/" element={<MainHub audioControls={audioControls} />} />
+        <Route path="/admin" element={<AdminDashboard audioControls={audioControls} />} />
       </Routes>
     </Router>
   );

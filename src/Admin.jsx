@@ -35,6 +35,8 @@ const AdminDashboard = () => {
     // Tab Management
     const [activeTab, setActiveTab] = useState('dashboard');
     const [hubLogs, setHubLogs] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
 
     const fetchData = async () => {
         try {
@@ -142,15 +144,11 @@ const AdminDashboard = () => {
         visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
     };
 
-    const itemVariants = {
-        hidden: { y: 20, opacity: 0 },
-        visible: { y: 0, opacity: 1 }
-    };
-
     const handleLogin = (e) => {
         e.preventDefault();
         if (password === 'Poncholove20!!') {
             setIsAuthenticated(true);
+            localStorage.setItem('admin_authenticated', 'true');
             setError('');
         } else {
             setError('ACCESS DENIED: INVALID CREDENTIALS');
@@ -159,6 +157,7 @@ const AdminDashboard = () => {
     };
 
     if (!isAuthenticated) {
+        localStorage.removeItem('admin_authenticated');
         return (
             <div className="admin-auth-container">
                 <div className="admin-bg-blobs">
@@ -310,6 +309,26 @@ const AdminDashboard = () => {
 
                     {activeTab === 'logs' && (
                         <motion.div key="logs" className="analytics-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                            <div className="analytics-filters" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+                                <div className="search-wrap" style={{ flex: 1, position: 'relative' }}>
+                                    <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} />
+                                    <input
+                                        type="text"
+                                        placeholder="SEARCH BY IP, CITY, COUNTRY, OR SITE..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '1rem 1rem 1rem 3rem',
+                                            background: 'rgba(255,255,255,0.03)',
+                                            border: '1px solid var(--border)',
+                                            borderRadius: '16px',
+                                            color: '#fff',
+                                            outline: 'none'
+                                        }}
+                                    />
+                                </div>
+                            </div>
                             <div className="heatmap-section" style={{ height: '400px', padding: 0, overflow: 'hidden' }}>
                                 <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={true}>
                                     <TileLayer
@@ -341,61 +360,81 @@ const AdminDashboard = () => {
                             </div>
 
                             <div className="analytics-list">
-                                {hubLogs.length === 0 ? (
-                                    <div className="no-logs">ESTABLISHING GLOBAL SYNC...</div>
+                                {hubLogs
+                                    .filter(log => {
+                                        const s = searchTerm.toLowerCase();
+                                        return (
+                                            log.query?.toLowerCase().includes(s) ||
+                                            log.city?.toLowerCase().includes(s) ||
+                                            log.country?.toLowerCase().includes(s) ||
+                                            log.site?.toLowerCase().includes(s)
+                                        );
+                                    })
+                                    .length === 0 ? (
+                                    <div className="no-logs">NO MATCHING ENTRIES FOUND</div>
                                 ) : (
-                                    hubLogs.map(log => (
-                                        <div key={log.id} className="log-card" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '2rem' }}>
-                                            <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <div className="log-main">
-                                                    <div className="log-icon-wrap">{getFlagEmoji(log.countryCode)}</div>
-                                                    <div className="log-content">
-                                                        <h3>{log.site || 'Main Hub'} / {log.city || 'Edge Node'}</h3>
-                                                        <p>{log.country}, {log.region}</p>
-                                                        <small>{new Date(log.timestamp).toLocaleString()}</small>
+                                    hubLogs
+                                        .filter(log => {
+                                            const s = searchTerm.toLowerCase();
+                                            return (
+                                                log.query?.toLowerCase().includes(s) ||
+                                                log.city?.toLowerCase().includes(s) ||
+                                                log.country?.toLowerCase().includes(s) ||
+                                                log.site?.toLowerCase().includes(s)
+                                            );
+                                        })
+                                        .map(log => (
+                                            <div key={log.id} className="log-card" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '2rem' }}>
+                                                <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <div className="log-main">
+                                                        <div className="log-icon-wrap">{getFlagEmoji(log.countryCode)}</div>
+                                                        <div className="log-content">
+                                                            <h3>{log.site || 'Main Hub'} / {log.city || 'Edge Node'}</h3>
+                                                            <p>{log.country}, {log.region}</p>
+                                                            <small>{new Date(log.timestamp).toLocaleString()}</small>
+                                                        </div>
+                                                    </div>
+                                                    <div className="log-details">
+                                                        <div className="detail-item">
+                                                            <span className="label">Public IP</span>
+                                                            <span className="value" style={{ color: '#5b8cff' }}>{log.query}</span>
+                                                        </div>
+                                                        <div className="detail-item">
+                                                            <span className="label">ISP / Org</span>
+                                                            <span className="value">{log.isp}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="log-details">
-                                                    <div className="detail-item">
-                                                        <span className="label">Public IP</span>
-                                                        <span className="value" style={{ color: '#5b8cff' }}>{log.query}</span>
-                                                    </div>
-                                                    <div className="detail-item">
-                                                        <span className="label">ISP / Org</span>
-                                                        <span className="value">{log.isp}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
 
-                                            <div className="in-depth-meta" style={{
-                                                display: 'grid',
-                                                gridTemplateColumns: 'repeat(4, 1fr)',
-                                                width: '100%',
-                                                padding: '1.5rem',
-                                                background: 'rgba(0,0,0,0.2)',
-                                                borderRadius: '16px',
-                                                border: '1px solid rgba(255,255,255,0.05)',
-                                                gap: '1rem'
-                                            }}>
-                                                <div className="detail-item">
-                                                    <span className="label">OS / Device</span>
-                                                    <span className="value" style={{ fontSize: '0.7rem', opacity: 0.8 }}>{log.user_agent?.split(')')[0]?.split('(')[1]?.slice(0, 30) || 'Unknown'}</span>
-                                                </div>
-                                                <div className="detail-item">
-                                                    <span className="label">Resolution</span>
-                                                    <span className="value">{log.screen_res || '??'}</span>
-                                                </div>
-                                                <div className="detail-item">
-                                                    <span className="label">Referrer</span>
-                                                    <span className="value" style={{ fontSize: '0.75rem', color: '#ff5b8c' }}>{log.referrer?.slice(0, 20) || 'Direct'}</span>
-                                                </div>
-                                                <div className="detail-item">
-                                                    <span className="label">Language</span>
-                                                    <span className="value uppercase">{log.language || 'EN'}</span>
+                                                <div className="in-depth-meta" style={{
+                                                    display: 'grid',
+                                                    gridTemplateColumns: 'repeat(4, 1fr)',
+                                                    width: '100%',
+                                                    padding: '1.5rem',
+                                                    background: 'rgba(0,0,0,0.2)',
+                                                    borderRadius: '16px',
+                                                    border: '1px solid rgba(255,255,255,0.05)',
+                                                    gap: '1rem'
+                                                }}>
+                                                    <div className="detail-item">
+                                                        <span className="label">OS / Device</span>
+                                                        <span className="value" style={{ fontSize: '0.7rem', opacity: 0.8 }}>{log.user_agent?.split(')')[0]?.split('(')[1]?.slice(0, 30) || 'Unknown'}</span>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <span className="label">Resolution</span>
+                                                        <span className="value">{log.screen_res || '??'}</span>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <span className="label">Referrer</span>
+                                                        <span className="value" style={{ fontSize: '0.75rem', color: '#ff5b8c' }}>{log.referrer?.slice(0, 20) || 'Direct'}</span>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <span className="label">Language</span>
+                                                        <span className="value uppercase">{log.language || 'EN'}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        ))
                                 )}
                             </div>
                         </motion.div>

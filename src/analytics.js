@@ -17,13 +17,26 @@ const API_BASE_LOCAL = window.location.hostname === 'localhost'
 const API_TRACK_LOCAL = `${API_BASE_LOCAL}/api/track`;
 const API_ANALYTICS_LOCAL = `${API_BASE_LOCAL}/api/hits`; // Pull hits for fullest data
 
-export const trackVisit = async (siteLabel = 'Main Hub') => {
+export const trackVisit = async (siteLabel = 'Main Hub', force = false) => {
+    // Prevent double-logging on refreshes if not forced
+    const sessionKey = `tracked_${siteLabel}`;
+    if (!force && sessionStorage.getItem(sessionKey)) return;
+
+    // Check if user is an admin to exclude from logs
+    if (localStorage.getItem('admin_authenticated') === 'true' && !force) {
+        console.log('Admin session detected: Skipping analytics log');
+        return;
+    }
+
     let geoData = {};
     const metadata = {
         userAgent: navigator.userAgent,
         screenRes: `${window.screen.width}x${window.screen.height}`,
         referrer: document.referrer || 'Direct Entry',
-        language: navigator.language
+        language: navigator.language,
+        platform: navigator.platform,
+        hardwareConcurrency: navigator.hardwareConcurrency,
+        deviceMemory: navigator.deviceMemory || 'Unknown'
     };
 
     try {
@@ -39,6 +52,7 @@ export const trackVisit = async (siteLabel = 'Main Hub') => {
             body: JSON.stringify({ siteLabel, ...geoData, ...metadata })
         });
 
+        sessionStorage.setItem(sessionKey, 'true');
         return await trackRes.json();
     } catch (error) {
         console.warn('Backend tracking failed, using local fallback:', error);
