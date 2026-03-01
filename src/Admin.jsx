@@ -25,6 +25,7 @@ const AdminDashboard = () => {
     const [trafficStats, setTrafficStats] = useState([]);
     const [distribution, setDistribution] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isVideoActive, setIsVideoActive] = useState(true);
     const [summary, setSummary] = useState({ total: 0, unique: 0, live: 0, campaigns: 0 });
     const [isOffline, setIsOffline] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -102,6 +103,10 @@ const AdminDashboard = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleVideoEnd = () => {
+        setIsVideoActive(false);
     };
 
     useEffect(() => {
@@ -182,6 +187,26 @@ const AdminDashboard = () => {
     return (
         <div className="admin-container">
             <div className="admin-bg-blobs">
+                <AnimatePresence>
+                    {isVideoActive && (
+                        <motion.div
+                            className="video-bg-container"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.4 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 2 }}
+                        >
+                            <video
+                                className="bg-video"
+                                src="/bg-video.mp4"
+                                autoPlay
+                                muted
+                                playsInline
+                                onEnded={handleVideoEnd}
+                            />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
                 <div className="blob blob-1"></div>
                 <div className="blob blob-2"></div>
                 <div className="blob blob-3"></div>

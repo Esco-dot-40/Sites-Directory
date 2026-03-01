@@ -48,7 +48,9 @@ const MainHub = () => {
   const [pageTitle, setPageTitle] = useState("Veroe.fun");
   const [isLoading, setIsLoading] = useState(true);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [isVideoActive, setIsVideoActive] = useState(true);
   const audioRef = useRef(null);
+  const videoRef = useRef(null);
   const tracks = ["/bg-music.mp3", "/link-up.mp3"];
 
   const toggle = (domainName) => {
@@ -64,6 +66,10 @@ const MainHub = () => {
 
   const handleTrackEnd = () => {
     setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % tracks.length);
+  };
+
+  const handleVideoEnd = () => {
+    setIsVideoActive(false);
   };
 
   useEffect(() => {
@@ -266,6 +272,27 @@ const MainHub = () => {
       </motion.div>
 
       <div className="ambient-background">
+        <AnimatePresence>
+          {isVideoActive && (
+            <motion.div
+              className="video-bg-container"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.4 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 2 }}
+            >
+              <video
+                ref={videoRef}
+                className="bg-video"
+                src="/bg-video.mp4"
+                autoPlay
+                muted
+                playsInline
+                onEnded={handleVideoEnd}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="blob blob-1"></div>
         <div className="blob blob-2"></div>
         <div className="blob blob-3"></div>
