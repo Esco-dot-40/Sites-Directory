@@ -10,8 +10,12 @@ export const getFlagEmoji = (countryCode) => {
     return String.fromCodePoint(...codePoints);
 };
 
-const API_TRACK_LOCAL = 'http://localhost:5000/api/track';
-const API_ANALYTICS_LOCAL = 'http://localhost:5000/api/analytics';
+const API_BASE_LOCAL = window.location.hostname === 'localhost'
+    ? 'http://localhost:5000'
+    : ''; // Use relative paths in production to match Railway domain
+
+const API_TRACK_LOCAL = `${API_BASE_LOCAL}/api/track`;
+const API_ANALYTICS_LOCAL = `${API_BASE_LOCAL}/api/hits`; // Pull hits for fullest data
 
 export const trackVisit = async (siteLabel = 'Main Hub') => {
     let geoData = {};

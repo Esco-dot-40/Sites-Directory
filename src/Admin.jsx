@@ -35,8 +35,6 @@ const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [hubLogs, setHubLogs] = useState([]);
 
-    const API_BASE = 'https://pixel-tracker-production-2f84.up.railway.app';
-
     const fetchData = async () => {
         try {
             const hRes_raw = await fetch(`${API_BASE}/api/hits`);
@@ -58,11 +56,12 @@ const AdminDashboard = () => {
                 const date = new Date(hit.timestamp);
                 const dayName = days[date.getDay()];
                 const stat = stats.find(s => s.name === dayName);
+                const visitorIp = hit.ip || hit.query || '0.0.0.0';
 
                 if (stat) {
                     stat.visits++;
-                    if (!uniqueIps.has(hit.ip)) {
-                        uniqueIps.add(hit.ip);
+                    if (!uniqueIps.has(visitorIp)) {
+                        uniqueIps.add(visitorIp);
                         stat.unique++;
                     }
                 }
@@ -79,11 +78,7 @@ const AdminDashboard = () => {
 
             const domainsMap = {};
             hRes.forEach(hit => {
-                let domain = 'Direct';
-                try {
-                    if (hit.meta?.target_url) domain = new URL(hit.meta.target_url).hostname;
-                    else if (hit.campaign_id === 'domain-hub') domain = 'domain-hub';
-                } catch (e) { }
+                let domain = hit.site_label || hit.campaign_id || 'Main Hub';
                 domainsMap[domain] = (domainsMap[domain] || 0) + 1;
             });
             const distData = Object.entries(domainsMap)
@@ -94,10 +89,10 @@ const AdminDashboard = () => {
 
             const feed = hRes.slice(0, 10).map(h => ({
                 id: h.id,
-                name: h.campaign_id,
-                domain: h.meta?.target_url ? new URL(h.meta.target_url).hostname : 'Tracker / direct',
-                ip: h.ip,
-                location: `${h.city || 'Unknown'}, ${h.country || 'Unknown'}`,
+                name: h.site_label || h.campaign_id || 'Internal',
+                domain: h.referrer || 'Direct Entry',
+                ip: h.ip || h.query || 'Unknown',
+                location: `${h.city || 'Edge Node'}, ${h.country || '??'}`,
                 status: (new Date() - new Date(h.timestamp)) < 300000 ? 'Online' : 'Recent'
             }));
             setLiveHits(feed);
@@ -110,7 +105,7 @@ const AdminDashboard = () => {
     };
 
     useEffect(() => {
-        document.title = "Tweaking System, One Sec";
+        document.title = "Rule, Find, Bind / veroe.fun";
         fetchData();
         const refreshLogs = async () => {
             const logs = await getHubAnalytics();
@@ -123,13 +118,10 @@ const AdminDashboard = () => {
         }, 15000);
         return () => {
             clearInterval(interval);
-            document.title = "Rule, Find, Bind / veroe.fun";
         };
     }, []);
 
-    useEffect(() => {
-        document.title = loading ? "Tweaking System, One Sec" : "Rule, Find, Bind / veroe.fun";
-    }, [loading]);
+
 
     if (loading) return (
         <div className="admin-loading">

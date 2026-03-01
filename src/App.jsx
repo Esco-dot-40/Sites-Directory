@@ -47,7 +47,9 @@ const MainHub = () => {
   const [isIntroComplete, setIsIntroComplete] = useState(false);
   const [pageTitle, setPageTitle] = useState("Veroe.fun");
   const [isLoading, setIsLoading] = useState(true);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const audioRef = useRef(null);
+  const tracks = ["/bg-music.mp3", "/link-up.mp3"];
 
   const toggle = (domainName) => {
     setOpen(open === domainName ? null : domainName);
@@ -60,6 +62,16 @@ const MainHub = () => {
     }
   };
 
+  const handleTrackEnd = () => {
+    setCurrentTrackIndex((prevIndex) => (prevIndex + 1) % tracks.length);
+  };
+
+  useEffect(() => {
+    if (audioRef.current && !isMuted) {
+      audioRef.current.play().catch(e => console.log("Playback failed on track change:", e));
+    }
+  }, [currentTrackIndex]);
+
   const handleVolumeChange = (e) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
@@ -69,6 +81,9 @@ const MainHub = () => {
   };
 
   useEffect(() => {
+    // Set official title immediately when component mounts
+    document.title = "Rule, Find, Bind / veroe.fun";
+
     // Analytics Tracking Hit (Legacy Pixel)
     fetch('https://pixel-tracker-production-2f84.up.railway.app/t/domain-hub.png?setup=false', { mode: 'no-cors' })
       .catch(e => console.log('Analytics offline'));
@@ -92,17 +107,19 @@ const MainHub = () => {
   }, []);
 
   useEffect(() => {
-    if (!isIntroComplete) {
-      document.title = "Tweaking System, One Sec";
-    } else {
-      document.title = "Rule, Find, Bind / veroe.fun";
+    if (isIntroComplete) {
       setIsLoading(false);
     }
   }, [isIntroComplete]);
 
   return (
     <div className="domains-container">
-      <audio ref={audioRef} src="/bg-music.mp3" loop />
+      <audio
+        ref={audioRef}
+        src={tracks[currentTrackIndex]}
+        onEnded={handleTrackEnd}
+        autoPlay={!isMuted}
+      />
 
       {/* Admin Link (Discrete) */}
       <Link to="/admin" className="admin-discrete-link">
