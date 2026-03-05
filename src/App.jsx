@@ -10,6 +10,7 @@ const domains = [
   {
     name: "velarixsolutions.nl",
     sites: [
+      { label: "Main Site", url: "https://velarixsolutions.nl", description: "Official Velarix Solutions landing page." },
       { label: "Crypto", url: "https://crypto.velarixsolutions.nl", description: "WIP Crypto Exchange" },
       { label: "Farkle", url: "https://farkle.velarixsolutions.nl", description: "Multiplayer dice game with real-time stats. (Web version of discord app)" },
       { label: "Find", url: "https://find.velarixsolutions.nl", description: "Search and discovery toolkit." },

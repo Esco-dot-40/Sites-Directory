@@ -14,14 +14,32 @@ app.use(cors());
 app.use(express.json());
 
 // Database Pool
+let connectionString = process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL;
+
+// Validation for Railway placeholders
+if (connectionString && connectionString.includes('${{')) {
+    console.warn('⚠️ Placeholder DATABASE_PUBLIC_URL detected, falling back to DATABASE_URL');
+    connectionString = process.env.DATABASE_URL;
+}
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_PUBLIC_URL || process.env.DATABASE_URL,
+    connectionString: connectionString,
     ssl: { rejectUnauthorized: false }
+});
+
+pool.on('error', (err) => {
+    console.error('❌ Unexpected error on idle client', err);
 });
 
 // Initialize and Migrate Database
 const initDb = async () => {
+    console.log('📡 Initializing database connection...');
     try {
+        // Test connection
+        const client = await pool.connect();
+        console.log('✅ Database connection established via pool');
+        client.release();
+
         // Base Table
         await pool.query(`
             CREATE TABLE IF NOT EXISTS visitor_logs (
@@ -52,9 +70,12 @@ const initDb = async () => {
             ALTER TABLE visitor_logs ADD COLUMN IF NOT EXISTS language TEXT;
         `;
         await pool.query(migrateQuery);
-        console.log('✅ Database initialized and migrated successfully');
+        console.log('✅ Database schema verified and migrated successfully');
     } catch (err) {
         console.error('❌ Database initialization error:', err.message);
+        if (err.message.includes('ENOTFOUND')) {
+            console.error('💡 TIP: It looks like the database host cannot be reached. Check your DATABASE_URL/DATABASE_PUBLIC_URL.');
+        }
     }
 };
 
