@@ -14,13 +14,9 @@ import 'leaflet/dist/leaflet.css';
 import { getHubAnalytics, getFlagEmoji } from './analytics';
 import './Admin.css';
 
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : '';
-
 const COLORS = ['#5b8cff', '#ff5b8c', '#5bff8c', '#8c5bff', '#ffa500', '#00d4ff'];
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ audioControls }) => {
     const [liveHits, setLiveHits] = useState([]);
     const [trafficStats, setTrafficStats] = useState([]);
     const [distribution, setDistribution] = useState([]);
@@ -39,22 +35,15 @@ const AdminDashboard = () => {
 
     const fetchData = async () => {
         try {
-            const hRes_raw = await fetch(`${API_BASE}/api/hits`);
-            if (!hRes_raw.ok) throw new Error('API Unreachable');
-            const hRes = await hRes_raw.json();
-
-            const cRes_raw = await fetch(`${API_BASE}/api/campaigns`);
-            const cRes = cRes_raw.ok ? await cRes_raw.json() : [];
-
+            const logs = await getHubAnalytics();
             setIsOffline(false);
 
-            // Process Traffic Stats (Last 7 Days)
             const statsMap = {};
             const uniqueIps = new Set();
             const now = new Date();
             let liveCount = 0;
 
-            hRes.forEach(hit => {
+            logs.forEach(hit => {
                 const date = new Date(hit.timestamp);
                 const dateKey = date.toLocaleDateString('en-US', { weekday: 'short' });
 
@@ -75,41 +64,41 @@ const AdminDashboard = () => {
 
             setTrafficStats(sortedStats);
             setSummary({
-                total: hRes.length,
+                total: logs.length,
                 unique: uniqueIps.size,
                 live: liveCount,
-                campaigns: cRes.length,
-                avgPerDay: Math.round(hRes.length / 7)
+                campaigns: new Set(logs.map(l => l.site_label)).size,
+                avgPerDay: Math.round(logs.length / Math.max(1, new Set(logs.map(l => new Date(l.timestamp).toDateString())).size))
             });
 
-            // Process Node Distribution
+            // Top Sites Distribution
             const domainsMap = {};
-            hRes.forEach(hit => {
-                let domain = hit.site_label || hit.campaign_id || 'Main Hub';
+            logs.forEach(hit => {
+                let domain = hit.site_label || 'Main Hub';
                 domainsMap[domain] = (domainsMap[domain] || 0) + 1;
             });
-
             const distData = Object.entries(domainsMap)
                 .map(([name, value]) => ({ name, value }))
                 .sort((a, b) => b.value - a.value);
-
-            setDistribution(distData.slice(0, 5));
             setTopSites(distData.slice(0, 8));
 
-            // Set Feed
-            const feed = hRes.slice(0, 15).map(h => ({
-                id: h.id,
-                name: h.site_label || 'Internal',
-                domain: h.referrer || 'Direct Entry',
-                ip: h.ip || h.query || 'Unknown',
-                location: `${h.city || 'Unknown'}, ${h.country_code || '??'}`,
-                time: new Date(h.timestamp).toLocaleTimeString(),
-                status: (new Date() - new Date(h.timestamp)) < 300000 ? 'Live' : 'Recent'
-            }));
-            setLiveHits(feed);
-            setHubLogs(hRes);
+            // Referrer Breakdown
+            const referMap = {};
+            logs.forEach(hit => {
+                let ref = hit.referrer || 'Direct';
+                if (ref.includes('://')) ref = ref.split('/')[2];
+                referMap[ref] = (referMap[ref] || 0) + 1;
+            });
+            const referrerData = Object.entries(referMap)
+                .map(([name, value]) => ({ name, value }))
+                .sort((a, b) => b.value - a.value)
+                .slice(0, 5);
+            setDistribution(referrerData);
+
+            setLiveHits(logs.slice(0, 15));
+            setHubLogs(logs);
         } catch (error) {
-            console.error('Data Sync Error:', error.message);
+            console.error('Admin Fetch Error:', error);
             setIsOffline(true);
         } finally {
             setLoading(false);
