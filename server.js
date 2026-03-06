@@ -154,7 +154,7 @@ app.get('/api/health', (req, res) => {
 app.use(express.static(distPath));
 
 // Handle React Routing
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'), (err) => {
         if (err) {
             res.status(500).send("Frontend build not found. Run 'npm run build' first.");
