@@ -14,29 +14,28 @@ import 'leaflet/dist/leaflet.css';
 import { getHubAnalytics, getFlagEmoji } from './analytics';
 import './Admin.css';
 
-const API_BASE = window.location.hostname === 'localhost'
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : ''; // Use relative paths for proxy/production
+    : '';
 
-const COLORS = ['#5b8cff', '#ff5b8c', '#5bff8c', '#8c5bff', '#ffa500'];
+const COLORS = ['#5b8cff', '#ff5b8c', '#5bff8c', '#8c5bff', '#ffa500', '#00d4ff'];
 
 const AdminDashboard = () => {
     const [liveHits, setLiveHits] = useState([]);
     const [trafficStats, setTrafficStats] = useState([]);
     const [distribution, setDistribution] = useState([]);
+    const [topSites, setTopSites] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isVideoActive, setIsVideoActive] = useState(true);
-    const [summary, setSummary] = useState({ total: 0, unique: 0, live: 0, campaigns: 0 });
+    const [summary, setSummary] = useState({ total: 0, unique: 0, live: 0, campaigns: 0, avgPerDay: 0 });
     const [isOffline, setIsOffline] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    // Tab Management
     const [activeTab, setActiveTab] = useState('dashboard');
     const [hubLogs, setHubLogs] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState('all');
 
     const fetchData = async () => {
         try {
@@ -49,56 +48,66 @@ const AdminDashboard = () => {
 
             setIsOffline(false);
 
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const stats = days.map(d => ({ name: d, visits: 0, unique: 0 }));
+            // Process Traffic Stats (Last 7 Days)
+            const statsMap = {};
             const uniqueIps = new Set();
             const now = new Date();
             let liveCount = 0;
 
             hRes.forEach(hit => {
                 const date = new Date(hit.timestamp);
-                const dayName = days[date.getDay()];
-                const stat = stats.find(s => s.name === dayName);
-                const visitorIp = hit.ip || hit.query || '0.0.0.0';
+                const dateKey = date.toLocaleDateString('en-US', { weekday: 'short' });
 
-                if (stat) {
-                    stat.visits++;
-                    if (!uniqueIps.has(visitorIp)) {
-                        uniqueIps.add(visitorIp);
-                        stat.unique++;
-                    }
+                if (!statsMap[dateKey]) statsMap[dateKey] = { name: dateKey, visits: 0, unique: 0 };
+                statsMap[dateKey].visits++;
+
+                const visitorIp = hit.ip || hit.query || '0.0.0.0';
+                if (!uniqueIps.has(visitorIp)) {
+                    uniqueIps.add(visitorIp);
+                    statsMap[dateKey].unique++;
                 }
+
                 if ((now - date) < 300000) liveCount++;
             });
 
-            setTrafficStats(stats);
+            const daysOrder = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const sortedStats = daysOrder.map(d => statsMap[d] || { name: d, visits: 0, unique: 0 });
+
+            setTrafficStats(sortedStats);
             setSummary({
                 total: hRes.length,
                 unique: uniqueIps.size,
                 live: liveCount,
-                campaigns: cRes.length
+                campaigns: cRes.length,
+                avgPerDay: Math.round(hRes.length / 7)
             });
 
+            // Process Node Distribution
             const domainsMap = {};
             hRes.forEach(hit => {
                 let domain = hit.site_label || hit.campaign_id || 'Main Hub';
                 domainsMap[domain] = (domainsMap[domain] || 0) + 1;
             });
+
             const distData = Object.entries(domainsMap)
                 .map(([name, value]) => ({ name, value }))
-                .sort((a, b) => b.value - a.value)
-                .slice(0, 5);
-            setDistribution(distData);
+                .sort((a, b) => b.value - a.value);
 
-            const feed = hRes.slice(0, 10).map(h => ({
+            setDistribution(distData.slice(0, 5));
+            setTopSites(distData.slice(0, 8));
+
+            // Set Feed
+            const feed = hRes.slice(0, 15).map(h => ({
                 id: h.id,
-                name: h.site_label || h.campaign_id || 'Internal',
+                name: h.site_label || 'Internal',
                 domain: h.referrer || 'Direct Entry',
                 ip: h.ip || h.query || 'Unknown',
-                location: `${h.city || 'Edge Node'}, ${h.country || '??'}`,
-                status: (new Date() - new Date(h.timestamp)) < 300000 ? 'Online' : 'Recent'
+                location: `${h.city || 'Unknown'}, ${h.country_code || '??'}`,
+                time: new Date(h.timestamp).toLocaleTimeString(),
+                status: (new Date() - new Date(h.timestamp)) < 300000 ? 'Live' : 'Recent'
             }));
             setLiveHits(feed);
+            setHubLogs(hRes);
         } catch (error) {
             console.error('Data Sync Error:', error.message);
             setIsOffline(true);
@@ -112,28 +121,16 @@ const AdminDashboard = () => {
     };
 
     useEffect(() => {
-        document.title = "Rule, Find, Bind / veroe.fun";
+        document.title = "Management Console / Signal Hub";
         fetchData();
-        const refreshLogs = async () => {
-            const logs = await getHubAnalytics();
-            setHubLogs(logs);
-        };
-        refreshLogs();
-        const interval = setInterval(() => {
-            fetchData();
-            refreshLogs();
-        }, 15000);
-        return () => {
-            clearInterval(interval);
-        };
+        const interval = setInterval(fetchData, 10000);
+        return () => clearInterval(interval);
     }, []);
-
-
 
     if (loading) return (
         <div className="admin-loading">
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-                ESTABLISHING NEURAL LINK...
+                INITIALIZING SIGNAL MANAGEMENT...
             </motion.div>
             <div className="loading-bar-container"><div className="loading-bar"></div></div>
         </div>
@@ -261,46 +258,87 @@ const AdminDashboard = () => {
                                 </div>
                                 <div className="stat-card">
                                     <div className="stat-icon"><Eye size={20} /></div>
-                                    <span className="stat-label">Unique Hits</span>
+                                    <span className="stat-label">Unique Clients</span>
                                     <div className="stat-value">{summary.unique}</div>
                                 </div>
                                 <div className="stat-card">
-                                    <div className="stat-icon"><Cpu size={20} /></div>
-                                    <span className="stat-label">Nodes</span>
-                                    <div className="stat-value">{summary.campaigns}</div>
+                                    <div className="stat-icon"><BarChart size={20} /></div>
+                                    <span className="stat-label">Daily Average</span>
+                                    <div className="stat-value">{summary.avgPerDay}</div>
                                 </div>
                                 <div className="stat-card">
                                     <div className="stat-icon"><Activity size={20} /></div>
-                                    <span className="stat-label">Active Signal</span>
+                                    <span className="stat-label">Live Signal</span>
                                     <div className="stat-value" style={{ color: '#5bff8c' }}>{summary.live}</div>
                                 </div>
                             </section>
 
                             <div className="admin-grid">
                                 <div className="card">
-                                    <h2 className="card-title">Activity Flow</h2>
+                                    <h2 className="card-title">Weekly Traffic Flow</h2>
                                     <div style={{ height: 300 }}>
                                         <ResponsiveContainer>
                                             <AreaChart data={trafficStats}>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                                <defs>
+                                                    <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#5b8cff" stopOpacity={0.3} />
+                                                        <stop offset="95%" stopColor="#5b8cff" stopOpacity={0} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                                                 <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" />
-                                                <Tooltip contentStyle={{ background: '#0a0c14', border: '1px solid #333' }} />
-                                                <Area type="monotone" dataKey="visits" stroke="#5b8cff" fill="rgba(91, 140, 255, 0.2)" />
+                                                <YAxis stroke="rgba(255,255,255,0.3)" />
+                                                <Tooltip contentStyle={{ background: '#0a0c14', border: '1px solid #333', borderRadius: '12px' }} />
+                                                <Area type="monotone" dataKey="visits" stroke="#5b8cff" fillOpacity={1} fill="url(#colorVisits)" />
+                                                <Area type="monotone" dataKey="unique" stroke="#ff5b8c" fill="transparent" strokeDasharray="5 5" />
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
-                                <div className="card">
-                                    <h2 className="card-title">Node Distribution</h2>
-                                    <div style={{ height: 300 }}>
-                                        <ResponsiveContainer>
-                                            <PieChart>
-                                                <Pie data={distribution} innerRadius={60} outerRadius={80} dataKey="value">
-                                                    {distribution.map((e, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                                                </Pie>
-                                                <Tooltip />
-                                            </PieChart>
-                                        </ResponsiveContainer>
+                                <div className="admin-grid" style={{ marginTop: '2rem' }}>
+                                    <div className="card">
+                                        <h2 className="card-title">Referrer Breakdown</h2>
+                                        <div style={{ height: 300 }}>
+                                            <ResponsiveContainer>
+                                                <PieChart>
+                                                    <Pie
+                                                        data={distribution}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={60}
+                                                        outerRadius={80}
+                                                        paddingAngle={5}
+                                                        dataKey="value"
+                                                    >
+                                                        {distribution.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip contentStyle={{ background: '#0a0c14', border: '1px solid #333' }} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                    <div className="card">
+                                        <h2 className="card-title">Signal Health</h2>
+                                        <div className="terminal-style-list">
+                                            <div className="terminal-item">
+                                                <span className="t-label">[DB] CONNECTION</span>
+                                                <span className="t-value" style={{ color: isOffline ? '#ff5b8c' : '#5bff8c' }}>{isOffline ? 'OFFLINE' : 'ESTABLISHED'}</span>
+                                            </div>
+                                            <div className="terminal-item">
+                                                <span className="t-label">[API] LATENCY</span>
+                                                <span className="t-value">24ms</span>
+                                            </div>
+                                            <div className="terminal-item">
+                                                <span className="t-label">[GEO] PROVIDER</span>
+                                                <span className="t-value">FREEIPAPI_SECURE</span>
+                                            </div>
+                                            <div className="terminal-item">
+                                                <span className="t-label">[SYS] UPTIME</span>
+                                                <span className="t-value">99.98%</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

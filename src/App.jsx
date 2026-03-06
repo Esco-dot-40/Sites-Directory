@@ -81,17 +81,7 @@ const MainHub = ({ audioControls }) => {
     <div className="domains-container">
 
 
-      {/* Admin Link (Discrete) */}
-      <Link to="/admin" className="admin-discrete-link">
-        <motion.div
-          whileHover={{ scale: 1.1, rotate: 90 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 2.18l7 3.12v4.7c0 4.54-3.08 8.65-7 9.88-3.92-1.23-7-5.34-7-9.88V6.3l7-3.12z" />
-          </svg>
-        </motion.div>
-      </Link>
+
 
       <motion.div
         className="audio-player-glass"
@@ -318,7 +308,7 @@ function App() {
       />
       <Routes>
         <Route path="/" element={<MainHub audioControls={audioControls} />} />
-        <Route path="/admin" element={<AdminDashboard audioControls={audioControls} />} />
+        <Route path="/management" element={<AdminDashboard audioControls={audioControls} />} />
       </Routes>
     </Router>
   );
