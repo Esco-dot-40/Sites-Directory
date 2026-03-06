@@ -106,7 +106,7 @@ app.post('/api/track', async (req, res) => {
             siteLabel, query, city, regionName, country, countryCode, isp, lat, lon, timezone,
             userAgent, screenRes, referrer, language
         ];
-        console.log(`📡 Hit logged: ${siteLabel} from ${city}, ${countryCode} (${query})`);
+        console.log(`[${new Date().toLocaleTimeString()}] 🚀 Tracking: ${siteLabel} | Client: ${query} | ${city}, ${countryCode}`);
         const { rows } = await pool.query(queryText, values);
         res.status(201).json(rows[0]);
     } catch (err) {
