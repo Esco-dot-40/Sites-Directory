@@ -122,8 +122,8 @@ const MainHub = ({ audioControls }) => {
             key="initial-loader"
             className="initial-loader-overlay"
             initial={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.1, filter: 'blur(20px)' }}
-            transition={{ duration: 1.2, ease: [0.23, 1, 0.32, 1] }}
+            exit={{ opacity: 0, filter: 'blur(30px)' }}
+            transition={{ duration: 1.5, ease: [0.23, 1, 0.32, 1] }}
             style={{
               position: 'fixed',
               inset: 0,
@@ -131,7 +131,7 @@ const MainHub = ({ audioControls }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'radial-gradient(circle at center, rgba(10, 15, 30, 0.8), #05070a)'
+              background: 'transparent' // Let Loader's video show through
             }}
           >
             <Loader />
@@ -139,9 +139,9 @@ const MainHub = ({ audioControls }) => {
         ) : (
           <motion.div
             key="main-content"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1 }}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
           >
 
 

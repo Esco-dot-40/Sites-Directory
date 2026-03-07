@@ -34,9 +34,14 @@ const AdminDashboard = ({ audioControls }) => {
     const [hubLogs, setHubLogs] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
 
+    const [latency, setLatency] = useState('...');
+
     const fetchData = async () => {
+        const startTime = performance.now();
         try {
             const logs = await getHubAnalytics();
+            const endTime = performance.now();
+            setLatency(`${Math.round(endTime - startTime)}ms`);
             setIsOffline(false);
 
             const statsMap = {};
@@ -333,15 +338,15 @@ const AdminDashboard = ({ audioControls }) => {
                                             </div>
                                             <div className="terminal-item">
                                                 <span className="t-label">[API] LATENCY</span>
-                                                <span className="t-value">24ms</span>
+                                                <span className="t-value">{latency}</span>
                                             </div>
                                             <div className="terminal-item">
                                                 <span className="t-label">[GEO] PROVIDER</span>
-                                                <span className="t-value">FREEIPAPI_SECURE</span>
+                                                <span className="t-value">FREEIPAPI_V2</span>
                                             </div>
                                             <div className="terminal-item">
-                                                <span className="t-label">[SYS] UPTIME</span>
-                                                <span className="t-value">99.98%</span>
+                                                <span className="t-label">[SYS] STATUS</span>
+                                                <span className="t-value" style={{ color: isOffline ? '#ff5b8c' : '#5bff8c' }}>{isOffline ? 'DEGRADED' : 'OPERATIONAL'}</span>
                                             </div>
                                         </div>
                                     </div>

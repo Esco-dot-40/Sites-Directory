@@ -2,81 +2,114 @@ import React from 'react';
 import styled from 'styled-components';
 
 const Loader = () => {
-    return (
-        <StyledWrapper>
-            <div className="wrapper-grid">
-                <div className="cube">
-                    <div className="face face-front">L</div>
-                    <div className="face face-back" />
-                    <div className="face face-right" />
-                    <div className="face face-left" />
-                    <div className="face face-top" />
-                    <div className="face face-bottom" />
-                </div>
-                <div className="cube">
-                    <div className="face face-front">O</div>
-                    <div className="face face-back" />
-                    <div className="face face-right" />
-                    <div className="face face-left" />
-                    <div className="face face-top" />
-                    <div className="face face-bottom" />
-                </div>
-                <div className="cube">
-                    <div className="face face-front">A</div>
-                    <div className="face face-back" />
-                    <div className="face face-right" />
-                    <div className="face face-left" />
-                    <div className="face face-top" />
-                    <div className="face face-bottom" />
-                </div>
-                <div className="cube">
-                    <div className="face face-front">D</div>
-                    <div className="face face-back" />
-                    <div className="face face-right" />
-                    <div className="face face-left" />
-                    <div className="face face-top" />
-                    <div className="face face-bottom" />
-                </div>
-                <div className="cube">
-                    <div className="face face-front">I</div>
-                    <div className="face face-back" />
-                    <div className="face face-right" />
-                    <div className="face face-left" />
-                    <div className="face face-top" />
-                    <div className="face face-bottom" />
-                </div>
-                <div className="cube">
-                    <div className="face face-front">N</div>
-                    <div className="face face-back" />
-                    <div className="face face-right" />
-                    <div className="face face-left" />
-                    <div className="face face-top" />
-                    <div className="face face-bottom" />
-                </div>
-                <div className="cube">
-                    <div className="face face-front">G</div>
-                    <div className="face face-back" />
-                    <div className="face face-right" />
-                    <div className="face face-left" />
-                    <div className="face face-top" />
-                    <div className="face face-bottom" />
-                </div>
-            </div>
-        </StyledWrapper>
-    );
+  return (
+    <StyledWrapper>
+      <div className="loader-video-container">
+        <video
+          className="loader-bg-video"
+          src="/loader-bg.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+        <div className="loader-overlay-tint"></div>
+      </div>
+      <div className="wrapper-grid">
+        <div className="cube">
+          <div className="face face-front">L</div>
+          <div className="face face-back" />
+          <div className="face face-right" />
+          <div className="face face-left" />
+          <div className="face face-top" />
+          <div className="face face-bottom" />
+        </div>
+        <div className="cube">
+          <div className="face face-front">O</div>
+          <div className="face face-back" />
+          <div className="face face-right" />
+          <div className="face face-left" />
+          <div className="face face-top" />
+          <div className="face face-bottom" />
+        </div>
+        <div className="cube">
+          <div className="face face-front">A</div>
+          <div className="face face-back" />
+          <div className="face face-right" />
+          <div className="face face-left" />
+          <div className="face face-top" />
+          <div className="face face-bottom" />
+        </div>
+        <div className="cube">
+          <div className="face face-front">D</div>
+          <div className="face face-back" />
+          <div className="face face-right" />
+          <div className="face face-left" />
+          <div className="face face-top" />
+          <div className="face face-bottom" />
+        </div>
+        <div className="cube">
+          <div className="face face-front">I</div>
+          <div className="face face-back" />
+          <div className="face face-right" />
+          <div className="face face-left" />
+          <div className="face face-top" />
+          <div className="face face-bottom" />
+        </div>
+        <div className="cube">
+          <div className="face face-front">N</div>
+          <div className="face face-back" />
+          <div className="face face-right" />
+          <div className="face face-left" />
+          <div className="face face-top" />
+          <div className="face face-bottom" />
+        </div>
+        <div className="cube">
+          <div className="face face-front">G</div>
+          <div className="face face-back" />
+          <div className="face face-right" />
+          <div className="face face-left" />
+          <div className="face face-top" />
+          <div className="face face-bottom" />
+        </div>
+      </div>
+    </StyledWrapper>
+  );
 }
 
 const StyledWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+
+  .loader-video-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+
+  .loader-bg-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.8) contrast(1.2);
+  }
+
+  .loader-overlay-tint {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.4), #000);
+    z-index: 1;
+  }
 
   .wrapper-grid {
     --animation-duration: 2.1s;
-    --cube-color: #0000;
-    --highlight-color: #00cc44;
+    --cube-color: rgba(12, 11, 11, 0.4);
+    --highlight-color: #350066ff;
     --cube-width: 48px;
     --cube-height: 48px;
     --font-size: 1.8em;

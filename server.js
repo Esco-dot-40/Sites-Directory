@@ -92,12 +92,15 @@ const initDb = async () => {
 initDb();
 
 // Track Visit
-app.post('/api/track', async (req, res) => {
+// Track Visit (v1)
+app.post('/api/v1/track', async (req, res) => {
     const {
         siteLabel, query, city, regionName, country, countryCode, isp, lat, lon, timezone,
         userAgent, screenRes, referrer, language
     } = req.body;
     try {
+        if (!pool) throw new Error('Database pool not initialized');
+        
         const queryText = `
             INSERT INTO visitor_logs (
                 site_label, ip, city, region, country, country_code, isp, lat, lon, timezone,
@@ -107,9 +110,22 @@ app.post('/api/track', async (req, res) => {
             RETURNING *;
         `;
         const values = [
-            siteLabel, query, city, regionName, country, countryCode, isp, lat, lon, timezone,
-            userAgent, screenRes, referrer, language
+            siteLabel || 'Unknown Hub', 
+            query || '0.0.0.0', 
+            city || 'Unknown', 
+            regionName || 'Unknown', 
+            country || 'Unknown', 
+            countryCode || '??', 
+            isp || 'Unknown', 
+            parseFloat(lat) || 0, 
+            parseFloat(lon) || 0, 
+            timezone || 'UTC',
+            userAgent || 'Unknown', 
+            screenRes || 'Unknown', 
+            referrer || 'Direct', 
+            language || 'en'
         ];
+        
         console.log(`[${new Date().toLocaleTimeString()}] 🚀 Tracking: ${siteLabel} | Client: ${query} | ${city}, ${countryCode}`);
         const { rows } = await pool.query(queryText, values);
         res.status(201).json(rows[0]);
@@ -119,8 +135,8 @@ app.post('/api/track', async (req, res) => {
     }
 });
 
-// Get Hits
-app.get('/api/hits', async (req, res) => {
+// Get Hits (v1)
+app.get('/api/v1/hits', async (req, res) => {
     try {
         const { rows } = await pool.query('SELECT * FROM visitor_logs ORDER BY timestamp DESC LIMIT 500;');
         res.json(rows);
@@ -129,6 +145,10 @@ app.get('/api/hits', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch signal data', details: err.message });
     }
 });
+
+// Redirect old routes to v1
+app.post('/api/track', (req, res) => res.redirect(307, '/api/v1/track'));
+app.get('/api/hits', (req, res) => res.redirect(301, '/api/v1/hits'));
 
 // Get Campaigns/Nodes
 app.get('/api/campaigns', async (req, res) => {

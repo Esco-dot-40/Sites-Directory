@@ -12,10 +12,10 @@ export const getFlagEmoji = (countryCode) => {
 
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:5000'
-    : '';
+    : 'https://pixel-tracker-production-2f84.up.railway.app'; // Fixed production backend URL
 
-const API_TRACK = `${API_BASE_URL}/api/track`;
-const API_HITS = `${API_BASE_URL}/api/hits`;
+const API_TRACK = `${API_BASE_URL}/api/v1/track`;
+const API_HITS = `${API_BASE_URL}/api/v1/hits`;
 
 export const trackVisit = async (siteLabel = 'Main Hub', force = false) => {
     let geoData = {};
@@ -38,15 +38,15 @@ export const trackVisit = async (siteLabel = 'Main Hub', force = false) => {
         if (responseGeo && responseGeo.ok) {
             const rawGeo = await responseGeo.json();
             geoData = {
-                query: rawGeo.ipAddress || 'Unknown',
-                city: rawGeo.cityName || 'Unknown',
-                regionName: rawGeo.regionName || 'Unknown',
-                country: rawGeo.countryName || 'Unknown',
-                countryCode: rawGeo.countryCode || '??',
-                isp: rawGeo.asName || 'Unknown',
+                query: rawGeo.ipAddress || rawGeo.ip_address || 'Unknown',
+                city: rawGeo.cityName || rawGeo.city || 'Unknown',
+                regionName: rawGeo.regionName || rawGeo.region || 'Unknown',
+                country: rawGeo.countryName || rawGeo.country || 'Unknown',
+                countryCode: rawGeo.countryCode || rawGeo.country_code || '??',
+                isp: rawGeo.asName || rawGeo.asn_org || 'Unknown',
                 lat: rawGeo.latitude || 0,
                 lon: rawGeo.longitude || 0,
-                timezone: rawGeo.timeZone || 'UTC'
+                timezone: rawGeo.timeZone || rawGeo.timezones?.[0] || 'UTC'
             };
         } else {
             geoData = {
