@@ -105,8 +105,8 @@ const MainHub = ({ audioControls }) => {
                 src="/bg-video.mp4"
                 autoPlay
                 muted
-                loop
                 playsInline
+                onEnded={handleVideoEnd}
               />
             </motion.div>
           )}
