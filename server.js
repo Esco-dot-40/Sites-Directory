@@ -40,6 +40,10 @@ pool.on('error', (err) => {
 // Initialize and Migrate Database
 const initDb = async () => {
     console.log('📡 Initializing database connection...');
+    if (!connectionString) {
+        console.error('❌ ERROR: No database connection string found. Check DATABASE_URL/DATABASE_PUBLIC_URL.');
+        return;
+    }
     try {
         // Test connection
         const client = await pool.connect();
@@ -110,8 +114,8 @@ app.post('/api/track', async (req, res) => {
         const { rows } = await pool.query(queryText, values);
         res.status(201).json(rows[0]);
     } catch (err) {
-        console.error('Track error:', err.message);
-        res.status(500).json({ error: 'Failed to log visit' });
+        console.error(`[${new Date().toLocaleTimeString()}] ❌ Track error:`, err.message);
+        res.status(500).json({ error: 'Failed to log visit', details: err.message });
     }
 });
 
@@ -121,7 +125,8 @@ app.get('/api/hits', async (req, res) => {
         const { rows } = await pool.query('SELECT * FROM visitor_logs ORDER BY timestamp DESC LIMIT 500;');
         res.json(rows);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch signal data' });
+        console.error('❌ Hits fetch error:', err.message);
+        res.status(500).json({ error: 'Failed to fetch signal data', details: err.message });
     }
 });
 

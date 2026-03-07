@@ -30,21 +30,37 @@ export const trackVisit = async (siteLabel = 'Main Hub', force = false) => {
     };
 
     try {
-        const responseGeo = await fetch(API_ENDPOINT);
-        if (!responseGeo.ok) throw new Error('Geo API failed');
-        const rawGeo = await responseGeo.json();
+        const responseGeo = await fetch(API_ENDPOINT).catch(() => {
+            console.warn('Geo API unreachable, falling back to basic tracking');
+            return null;
+        });
 
-        geoData = {
-            query: rawGeo.ipAddress || 'Unknown',
-            city: rawGeo.cityName || 'Unknown',
-            regionName: rawGeo.regionName || 'Unknown',
-            country: rawGeo.countryName || 'Unknown',
-            countryCode: rawGeo.countryCode || '??',
-            isp: rawGeo.asName || 'Unknown',
-            lat: rawGeo.latitude || 0,
-            lon: rawGeo.longitude || 0,
-            timezone: rawGeo.timeZone || 'UTC'
-        };
+        if (responseGeo && responseGeo.ok) {
+            const rawGeo = await responseGeo.json();
+            geoData = {
+                query: rawGeo.ipAddress || 'Unknown',
+                city: rawGeo.cityName || 'Unknown',
+                regionName: rawGeo.regionName || 'Unknown',
+                country: rawGeo.countryName || 'Unknown',
+                countryCode: rawGeo.countryCode || '??',
+                isp: rawGeo.asName || 'Unknown',
+                lat: rawGeo.latitude || 0,
+                lon: rawGeo.longitude || 0,
+                timezone: rawGeo.timeZone || 'UTC'
+            };
+        } else {
+            geoData = {
+                query: 'Fallback (Geo Failed)',
+                city: 'Unknown',
+                regionName: 'Unknown',
+                country: 'Unknown',
+                countryCode: '??',
+                isp: 'Unknown',
+                lat: 0,
+                lon: 0,
+                timezone: 'UTC'
+            };
+        }
 
         const trackRes = await fetch(API_TRACK, {
             method: 'POST',
@@ -52,7 +68,7 @@ export const trackVisit = async (siteLabel = 'Main Hub', force = false) => {
             body: JSON.stringify({ siteLabel, ...geoData, ...metadata })
         });
 
-        if (!trackRes.ok) throw new Error('Backend tracking failed');
+        if (!trackRes.ok) throw new Error(`Backend tracking failed: ${trackRes.status}`);
         return await trackRes.json();
     } catch (error) {
         console.warn('Analytics track error:', error.message);
@@ -68,6 +84,7 @@ export const getHubAnalytics = async () => {
         return data.map(log => ({
             ...log,
             site: log.site_label,
+            query: log.ip, // Map 'ip' from DB to 'query' for frontend compatibility
             countryCode: log.country_code
         }));
     } catch (error) {
