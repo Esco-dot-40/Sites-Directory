@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import Loader from './Loader';
 import { getHubAnalytics, getFlagEmoji } from './analytics';
 import './Admin.css';
 
@@ -117,11 +118,28 @@ const AdminDashboard = ({ audioControls }) => {
     }, []);
 
     if (loading) return (
-        <div className="admin-loading">
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-                INITIALIZING SIGNAL MANAGEMENT...
-            </motion.div>
-            <div className="loading-bar-container"><div className="loading-bar"></div></div>
+        <div className="admin-loading" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#05070a', zIndex: 10000 }}>
+            <div className="ambient-background" style={{ opacity: 0.4 }}>
+                <video
+                    className="bg-video"
+                    src="/bg-video.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                />
+            </div>
+            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+                <Loader />
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    style={{ marginTop: '2rem', fontSize: '0.8rem', letterSpacing: '0.3em', color: 'rgba(255,255,255,0.4)' }}
+                >
+                    INITIALIZING SIGNAL_CORE v4.2
+                </motion.div>
+            </div>
         </div>
     );
 
