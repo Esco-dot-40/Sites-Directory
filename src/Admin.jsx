@@ -134,7 +134,6 @@ const AdminDashboard = ({ audioControls }) => {
         e.preventDefault();
         if (password === 'Poncholove20!!') {
             setIsAuthenticated(true);
-            localStorage.setItem('admin_authenticated', 'true');
             setError('');
         } else {
             setError('ACCESS DENIED: INVALID CREDENTIALS');
@@ -143,7 +142,6 @@ const AdminDashboard = ({ audioControls }) => {
     };
 
     if (!isAuthenticated) {
-        localStorage.removeItem('admin_authenticated');
         return (
             <div className="admin-auth-container">
                 <div className="admin-bg-blobs">
