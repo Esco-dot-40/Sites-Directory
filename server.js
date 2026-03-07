@@ -153,8 +153,8 @@ app.get('/api/health', (req, res) => {
 // Serve Frontend in Production
 app.use(express.static(distPath));
 
-// Handle React Routing
-app.get('/*', (req, res) => {
+// Handle React Routing - Use regex to match all paths (Express 5 compatibility)
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'), (err) => {
         if (err) {
             res.status(500).send("Frontend build not found. Run 'npm run build' first.");
